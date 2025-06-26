@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
-import { secret, isAdmin } from '../utils/utils'
+import { secret } from '../utils/config'
+import { isAdmin } from '../utils/verifications'
 
 type MyRequest = Request & { user: any }
 type User = {
@@ -16,7 +17,8 @@ export const auth = async (req: MyRequest, res: Response, next: any) => {
     const user = jwt.verify(token, secret) as User
     req.user = user
     if (!(await isAdmin(user.email))) {
-      return res.status(401).json({ message: 'Unauthorized', details: 'User is not admin' })
+      console.error('User is not admin')
+      return res.status(401).json({ message: 'Unauthorized' })
     }
     next()
   } catch (error) {

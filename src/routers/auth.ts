@@ -1,11 +1,12 @@
 import { Router } from 'express'
 import { validateUser } from '../types/user'
 import { User, UserIn } from '../types/types'
-import { turso, isUserExist } from '../utils/utils'
+import { turso } from '../utils/config'
 import { LibsqlError } from '@libsql/client'
 import bcrypt from 'bcrypt'
-import { saltRounds, secret } from '../utils/utils'
+import { saltRounds, secret } from '../utils/config'
 import jwt from 'jsonwebtoken'
+import { isUserExist } from '../utils/verifications'
 
 export const auth = Router()
 

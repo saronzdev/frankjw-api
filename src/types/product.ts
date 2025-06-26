@@ -1,16 +1,16 @@
 export interface ProductIn {
-  productId: number
+  productId: string
   name: string
   description: string
   price: number
   weight: number
   karats: number
-  pictures?: string[]
+  pictures?: Express.Multer.File[]
 }
 
 export const validateProduct = (data: any): data is ProductIn => {
   return (
-    typeof data.productId === 'number' &&
+    typeof data.productId === 'string' &&
     typeof data.name === 'string' &&
     typeof data.description === 'string' &&
     typeof data.price === 'number' &&

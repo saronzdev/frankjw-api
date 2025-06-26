@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
-import { initdb } from './utils/utils'
+import { initdb } from './utils/db'
 import { products } from './routers/products'
 import { auth } from './routers/auth'
 
@@ -13,6 +13,7 @@ const app = express()
 app.use(cors())
 app.use(morgan('dev'))
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 app.get('/', (req, res) => {
   res.send('Server working correctly')
@@ -21,6 +22,6 @@ app.get('/', (req, res) => {
 app.use('/api/v1', products)
 app.use('/api/v1/auth', auth)
 
-app.listen(3000, () => {
+app.listen(PORT, () => {
   console.log('Server running on port', PORT)
 })
