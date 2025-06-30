@@ -16,7 +16,7 @@ export const getAll = async (req: Request, res: Response, next: ()=> void) => {
     res.json(cats ? categories : data)
   } catch (error: any) {
     if (error instanceof LibsqlError) {
-      console.error('Error While Getting Products: ', error.cause)
+      console.error('Error While Getting Products: ', error.message)
       return res.status(500).json({ code: ErrorCodes.DatabaseError })
     }
     console.error('Unhandler Error While Getting Products: ', error.toString())
@@ -36,7 +36,7 @@ const getCats = async (req: Request, res: Response) => {
     res.json(products.rows.map((p) => p.category))
   } catch (error: any) {
     if (error instanceof LibsqlError) {
-      console.error('Error While Getting Cats: ', error.cause)
+      console.error('Error While Getting Cats: ', error.message)
       return res.status(500).json({ code: ErrorCodes.DatabaseError })
     }
     console.error('Unhandler Error While Getting Cats: ', error.toString())
@@ -79,7 +79,7 @@ export const getOneByCategory = async (req: Request, res: Response) => {
       res.json(products.rows.map((p) => ({...p, pictures: JSON.parse(p.pictures as string)})))
     } catch (error: any) {
       if (error instanceof LibsqlError) {
-        console.error('Error While Geting Products By Category : ', error.cause)
+        console.error('Error While Geting Products By Category : ', error.message)
         return res.status(500).json({ code: ErrorCodes.DatabaseError })
       }
       console.error('Unhandler Error While Geting Products By Category : ', error.toString())

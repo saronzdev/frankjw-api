@@ -29,7 +29,7 @@ export const addProduct = async (req: Request, res: Response) => {
     res.sendStatus(201)
   } catch (error: any) {
     if (error instanceof LibsqlError) {
-      console.error('Error While Creating Product: ', error.cause)
+      console.error('Error While Creating Product: ', error.message)
       return res.status(500).json({
         code: ErrorCodes.DatabaseError
       })
@@ -73,7 +73,7 @@ export const updateProduct = async (req: Request, res: Response) => {
     res.sendStatus(404)
   } catch (error: any) {
     if (error instanceof LibsqlError) {
-      console.error('Error While Creating Product: ', error.cause)
+      console.error('Error While Creating Product: ', error.message)
       res.status(500).json({
         code: ErrorCodes.DatabaseError
       })
@@ -97,7 +97,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
     res.status(404).json({ message: 'Product Not Found' })
   } catch (error: any) {
     if (error instanceof LibsqlError) {
-      console.error('Unhandler Error While Delete Product: ', error.cause)
+      console.error('Unhandler Error While Delete Product: ', error.message)
       res.status(500).json({ code: ErrorCodes.DatabaseError })
     }
     console.error('Unhandler Error While Delete Product: ', error.toString())

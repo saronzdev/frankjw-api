@@ -9,9 +9,9 @@ import jwt from 'jsonwebtoken'
 import { isAdmin, isUserExist } from '../utils/validations'
 import { ErrorCodes } from '../types/types'
 
-export const authRoute = Router()
+export const auth = Router()
 
-authRoute.post('/login', async (req, res) => {
+auth.post('/login', async (req, res): Promise<any> => {
   const data: UserIn = req.body
   if (!validateUserLogin(data)) return res.status(400).json({ code: ErrorCodes.InvalidCredentials })
   try {
@@ -32,7 +32,7 @@ authRoute.post('/login', async (req, res) => {
     res.json({ token, role })
   } catch (error: any) {
     if (error instanceof LibsqlError) {
-      console.error('Error While Login User: ', error.cause)
+      console.error('Error While Login User: ', error.message)
       return res.status(500).json({ code: ErrorCodes.DatabaseError })
     }
     console.error('Unhandler Error While Login User: ', error.toString())
@@ -40,7 +40,7 @@ authRoute.post('/login', async (req, res) => {
   }
 })
 
-authRoute.post('/register', async (req, res) => {
+auth.post('/register', async (req, res): Promise<any> => {
   const data: UserIn = req.body
   if (!validateUser(data)) return res.status(400).json({ message: 'Invalid User', code: ErrorCodes.InvalidCredentials })
   if (await isUserExist(data.email)) return res.status(409).json({ code: ErrorCodes.AlreadyExist })
@@ -53,7 +53,7 @@ authRoute.post('/register', async (req, res) => {
     res.sendStatus(201)
   } catch (error: any) {
     if (error instanceof LibsqlError) {
-      console.error('Error While Register User: ', error.cause)
+      console.error('Error While Register User: ', error.message)
       return res.status(500).json({code: ErrorCodes.DatabaseError})
     }
     console.error('Unhandler Error While Register User: ', error.toString())

@@ -3,7 +3,7 @@ import cors from 'cors'
 import morgan from 'morgan'
 import { initdb } from './utils/db'
 import { products } from './routers/products'
-import { authRoute } from './routers/auth'
+import { auth } from './routers/auth'
 
 const PORT = process.env.PORT ?? 3000
 await initdb()
@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 })
 
 app.use('/api/v1', products)
-app.use('/api/v1/auth', authRoute)
+app.use('/api/v1/auth', auth)
 
 app.listen(PORT, () => {
   console.log('Server running on port', PORT)
