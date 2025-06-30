@@ -46,7 +46,6 @@ export const updateProduct = async (req: Request, res: Response) => {
     console.log('data: ', data)
     if (!id || isNaN(id)) return res.status(400).json({ code: ErrorCodes.InvalidId })
     const productData = createProductData(data)
-    console.log('productData: ', productData)
 
     if (!validateProduct(productData)) return res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
     const isExist = await isProductExist(productData.productId)

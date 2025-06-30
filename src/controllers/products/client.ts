@@ -25,11 +25,9 @@ export const getAll = async (req: Request, res: Response, next: ()=> void) => {
 export const getCats = async (req: Request, res: Response) => {
   try {
     const products = await turso.execute('SELECT category FROM products')
-    console.log(products)
     if (products.rows.length === 0) {
       return res.sendStatus(404)
     }
-    console.log(products.rows.map((p) => p.category))
     res.json(products.rows.map((p) => p.category))
   } catch (error: any) {
     if (error instanceof LibsqlError) {
@@ -65,7 +63,6 @@ export const getCats = async (req: Request, res: Response) => {
 
 export const getOneByCategory = async (req: Request, res: Response) => {
   const { category } = req.params
-  console.log(category ?? 'nada')
     try {
       const products = await turso.execute({
         sql: 'SELECT * FROM products WHERE category = ?',
