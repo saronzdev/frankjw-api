@@ -11,13 +11,13 @@ initdb().catch((error) => {
   process.exit(1)
 })
 
-const app = express()
+export const app = express()
 
 app.use(cors())
 app.use(morgan('dev'))
 app.use(express.json())
 
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.send('Server working correctly')
 })
 

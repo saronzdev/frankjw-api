@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
+    "sourceMap": true,
     "module": "commonjs",
-    "target": "ES2020",
-    "moduleResolution": "node",
+    "target": "esnext",
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "strict": true
+    "strict": true,
+    "skipLibCheck": true,
   },
-  "include": ["src"]
+  "include": ["./api/*.ts"]
 }
