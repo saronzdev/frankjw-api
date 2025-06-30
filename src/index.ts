@@ -1,12 +1,15 @@
 import express, { Router } from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
-import { initdb } from './utils/db'
+import { initdb } from './utils/database'
 import { products } from './routers/products'
 import { auth } from './routers/auth'
 
 const PORT = process.env.PORT ?? 3000
-await initdb()
+initdb().catch((error) => {
+  console.error('Error initializing database:', error)
+  process.exit(1)
+})
 
 const app = express()
 
