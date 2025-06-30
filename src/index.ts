@@ -17,8 +17,8 @@ app.use(cors())
 app.use(morgan('dev'))
 app.use(express.json())
 
-app.get('/api', (req, res) => {
-  res.send('Server working correctly')
+app.get('/', (req, res) => {
+  res.json({message: 'Server working correctly'})
 })
 
 app.use('/api/v1', products)
