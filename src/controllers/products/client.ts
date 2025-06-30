@@ -1,39 +1,88 @@
 import { turso } from '../../utils/config'
 import { LibsqlError } from '@libsql/client'
 import { Request, Response } from 'express'
+import { ErrorCodes } from '../../types/types'
+import { ProductType } from '../../types/product'
 
-export const getAll = async (req: Request, res: Response) => {
+export const getAll = async (req: Request, res: Response, next: ()=> void) => {
+  const {cats} = req.query
   try {
     const products = await turso.execute('SELECT * FROM products')
     if (products.rows.length === 0) {
-      res.status(404).json({ message: 'Products not found' })
+      return res.sendStatus(404)
     }
-    res.json(products.rows)
-  } catch (error) {
+    const data = products.rows.map((p) => ({...p, pictures: JSON.parse(p.pictures as string)})) as unknown as ProductType[]
+    const categories = data.map(p => p.category)
+    res.json(cats ? categories : data)
+  } catch (error: any) {
     if (error instanceof LibsqlError) {
-      console.error('Error: ', error.cause)
-      res.status(500).json({ message: `An error ocurred: ${error.cause}` })
+      console.error('Error While Getting Products: ', error.cause)
+      return res.status(500).json({ code: ErrorCodes.DatabaseError })
     }
-    res.status(500).json({ message: 'An error ocurred', error })
+    console.error('Unhandler Error While Getting Products: ', error.toString())
+    return res.sendStatus(500)
   }
 }
 
-export const getOne = async (req: Request, res: Response) => {
-  const id = Number(req.params.id)
+const getCats = async (req: Request, res: Response) => {
+  const {cats} = req.query
+  console.log('a2')
   try {
-    const product = await turso.execute({
-      sql: 'SELECT * FROM products WHERE id = ?',
-      args: [id]
-    })
-    if (!product.rows[0]) {
-      res.status(404).json({ message: 'Product not found' })
+    const products = await turso.execute('SELECT category FROM products')
+    if (products.rows.length === 0) {
+      return res.sendStatus(404)
     }
-    res.json(product.rows[0])
-  } catch (error) {
+    console.log(products.rows)
+    res.json(products.rows.map((p) => p.category))
+  } catch (error: any) {
     if (error instanceof LibsqlError) {
-      console.error('Error: ', error.cause)
-      res.status(500).json({ message: `An error ocurred: ${error.cause}` })
+      console.error('Error While Getting Cats: ', error.cause)
+      return res.status(500).json({ code: ErrorCodes.DatabaseError })
     }
-    res.status(500).json({ message: 'An error ocurred', error })
+    console.error('Unhandler Error While Getting Cats: ', error.toString())
+    return res.sendStatus(500)
   }
+}
+
+// export const getOneById = async (req: Request, res: Response) => {
+//   const { id } = req.params
+
+//   if (!id) res.status(400).json(ErrorCodes)
+//   try {
+//     const product = await turso.execute({
+//       sql: 'SELECT * FROM products WHERE id = ?',
+//       args: [id]
+//     })
+//     if (!product.rows[0]) {
+//       res.sendStatus(404)
+//     }
+//     res.json(product.rows[0])
+//   } catch (error) {
+//     if (error instanceof LibsqlError) {
+//       console.error('Error While Geting Product : ', error.cause)
+//       res.status(500).json({ code: ErrorCodes.DatabaseError })
+//     }
+//     res.sendStatus(500)
+//   }
+// }
+
+export const getOneByCategory = async (req: Request, res: Response) => {
+  const { category } = req.params
+    try {
+      const products = await turso.execute({
+        sql: 'SELECT * FROM products WHERE category = ?',
+        args: [category]
+      })
+      if (products.rows.length === 0) {
+        return res.sendStatus(404)
+      }
+      res.json(products.rows.map((p) => ({...p, pictures: JSON.parse(p.pictures as string)})))
+    } catch (error: any) {
+      if (error instanceof LibsqlError) {
+        console.error('Error While Geting Products By Category : ', error.cause)
+        return res.status(500).json({ code: ErrorCodes.DatabaseError })
+      }
+      console.error('Unhandler Error While Geting Products By Category : ', error.toString())
+      return res.sendStatus(500)
+    }
 }

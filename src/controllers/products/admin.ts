@@ -1,82 +1,85 @@
-import { ProductIn, validateProduct } from '../../types/product'
-import { turso } from '../../utils/config'
+import { validateProduct } from '../../types/product'
+import { createProductData, turso } from '../../utils/config'
 import { LibsqlError } from '@libsql/client'
-import { buildUpdateQuery } from '../../utils/config'
 import { Request, Response } from 'express'
-import { uploadFile } from '../../utils/supabase'
+import { isProductExist } from '../../utils/validations'
+import { ErrorCodes } from '../../types/types'
 
 export const addProduct = async (req: Request, res: Response) => {
-  const data: ProductIn = req.body
-  const productData: ProductIn = {
-    productId: data.productId,
-    price: Number(data.price),
-    weight: Number(data.weight),
-    karats: Number(data.karats),
-    name: data.name,
-    description: data.description,
-    pictures: req.files as unknown as Express.Multer.File[]
-  }
+  const data = req.body
+  const productData = createProductData(data)
 
-  if (!validateProduct(productData)) return res.status(400).json({ message: 'Invalid product data' })
-
-  console.log(productData)
-
-  const uploadPromises = productData.pictures?.map((file) => uploadFile(file))
-  const uploadResults = await Promise.all(uploadPromises ?? [])
-
-  const errors = uploadResults.filter((result) => typeof result !== 'string')
-  if (errors.length > 0) {
-    console.error('Errores al subir archivos:', errors)
-    res.status(500).json({
-      message: 'Error al subir algunas imágenes: ' + errors.join(', ')
-    })
-  }
-  const imageUrls = uploadResults.filter((url): url is string => typeof url === 'string')
+  if (!validateProduct(productData)) return res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
+  if ((await isProductExist(productData.productId)).exist) return res.status(400).json({ code: ErrorCodes.AlreadyExist })
 
   try {
     await turso.execute({
-      sql: 'INSERT INTO products (productId, name, description, price, weight, karats, pictures) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      sql: 'INSERT INTO products (productId, name, description, category, price, weight, karats, pictures) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       args: [
         productData.productId,
         productData.name,
         productData.description,
+        productData.category,
         productData.price,
         productData.weight,
         productData.karats,
-        JSON.stringify(imageUrls)
+        JSON.stringify(productData.pictures)
       ]
     })
-
-    res.status(201).json({ message: 'Product created successfully' })
+    res.sendStatus(201)
   } catch (error: any) {
-    console.error('Error while creating product: ', error.toString())
-    res.status(500).json({
-      message: 'Error while creating product',
-      error: error.toString()
-    })
+    if (error instanceof LibsqlError) {
+      console.error('Error While Creating Product: ', error.cause)
+      return res.status(500).json({
+        code: ErrorCodes.DatabaseError
+      })
+    }
+    console.error('Unhandler Error While Creating Product: ', error.toString())
+    return res.sendStatus(500)
   }
 }
 
 export const updateProduct = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id)
-    const data: ProductIn = req.body
-    const consult = buildUpdateQuery('products', id, data)
-    const action = await turso.execute({
-      sql: consult.query,
-      args: consult.values
+    const data = req.body
+    console.log('data: ', data)
+    if (!id || isNaN(id)) return res.status(400).json({ code: ErrorCodes.InvalidId })
+    const productData = createProductData(data)
+    console.log('productData: ', productData)
+
+    if (!validateProduct(productData)) return res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
+    const isExist = await isProductExist(productData.productId)
+    if (isExist.exist && isExist.id !== id) return res.status(400).json({ code: ErrorCodes.AlreadyExist })
+
+      const action = await turso.execute({
+      sql: 'UPDATE products SET productId = ?, name = ?, description = ?, category = ?, price = ?, weight = ?, karats = ?, pictures = ? WHERE id = ?',
+      args: [
+        productData.productId.toString().toLowerCase(),
+        productData.name,
+        productData.description,
+        productData.category.toLowerCase(),
+        productData.price,
+        productData.weight,
+        productData.karats,
+        JSON.stringify(productData.pictures),
+        id
+      ]
     })
 
     if (action.rowsAffected > 0) {
-      res.json({ message: 'Product updated successfully' })
+      res.sendStatus(200)
     }
-
-    res.status(404).json({ message: 'Product Not Found' })
+    res.sendStatus(404)
   } catch (error: any) {
-    console.error('Error while updating product: ', error.toString())
-    return res.status(500).json({
-      message: 'Error while updating product:' + error.toString()
-    })
+    if (error instanceof LibsqlError) {
+      console.error('Error While Creating Product: ', error.cause)
+      res.status(500).json({
+        code: ErrorCodes.DatabaseError
+      })
+    }
+    console.error('Unhandler Error While Updating Product: ', error.toString())
+    res.sendStatus(500)
   }
 }
 
@@ -89,14 +92,15 @@ export const deleteProduct = async (req: Request, res: Response) => {
     })
 
     if (action.rowsAffected > 0) {
-      return res.json({ message: 'Product deleted successfully' })
+      res.json({ message: 'Product Deleted Successfully' })
     }
-    return res.status(404).json({ message: 'Product Not Found' })
-  } catch (error) {
+    res.status(404).json({ message: 'Product Not Found' })
+  } catch (error: any) {
     if (error instanceof LibsqlError) {
-      console.error('Error: ', error.cause)
-      res.status(500).json({ message: `An error ocurred: ${error.cause}` })
+      console.error('Unhandler Error While Delete Product: ', error.cause)
+      res.status(500).json({ code: ErrorCodes.DatabaseError })
     }
-    res.status(500).json({ message: 'An error ocurred', error })
+    console.error('Unhandler Error While Delete Product: ', error.toString())
+    res.sendStatus(500)
   }
 }

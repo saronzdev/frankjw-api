@@ -26,15 +26,15 @@ export const isAdmin = async (email: string) => {
   }
 }
 
-export const isProductExist = async (productId: number) => {
+export const isProductExist = async (productId: string) => {
   try {
     const product = await turso.execute({
       sql: 'SELECT * FROM products WHERE productId = ?',
       args: [productId]
     })
-    return product.rows.length > 0
+    return { exist: product.rows.length > 0, id: product.rows[0].id || null }
   } catch (error) {
     console.error('Error: ', error)
-    return false
+    return { exist: false, id: null}
   }
 }
