@@ -3,4 +3,4 @@ ignoredBuiltDependencies:
   - esbuild
 
 packages:
-  - api
+  - .
