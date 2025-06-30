@@ -5,7 +5,7 @@ export enum ErrorCodes {
   AccessDenied = 1003,
   UserNotFound = 1004,
   PasswordIncorrect = 1005,
-  AuthError = 1004,
+  AuthError = 1006,
 
   //Validations Errors
   InvalidMail = 2001,
