@@ -9,8 +9,6 @@ export const addProduct = async (req: Request, res: Response) => {
   const data = req.body
   const productData = createProductData(data)
 
-  console.log('productData: ', productData.productId)
-
   if (!validateProduct(productData)) return res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
   if ((await isProductExist(productData.productId)).exist)
     return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
@@ -46,7 +44,6 @@ export const updateProduct = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id)
     const data = req.body
-    console.log('data: ', data)
     if (!id || isNaN(id)) return res.status(400).json({ code: ErrorCodes.InvalidId })
     const productData = createProductData(data)
 
@@ -69,10 +66,10 @@ export const updateProduct = async (req: Request, res: Response) => {
       ]
     })
 
-    if (action.rowsAffected > 0) {
-      res.sendStatus(200)
+    if (action.rowsAffected === 0) {
+      return res.status(404).json({ code: ErrorCodes.ProductNotFound })
     }
-    res.status(404).json({ code: ErrorCodes.ProductNotFound })
+    res.sendStatus(200)
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Error While Creating Product: ', error.message)
@@ -93,16 +90,16 @@ export const deleteProduct = async (req: Request, res: Response) => {
       args: [id]
     })
 
-    if (action.rowsAffected > 0) {
-      res.json({ message: 'Product Deleted Successfully' })
+    if (action.rowsAffected === 0) {
+      return res.status(404).json({ code: ErrorCodes.ProductNotFound })
     }
-    res.status(404).json({ code: ErrorCodes.ProductNotFound })
+    res.sendStatus(200)
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Unhandler Error While Delete Product: ', error.message)
-      res.status(500).json({ code: ErrorCodes.DatabaseError })
+      return res.status(500).json({ code: ErrorCodes.DatabaseError })
     }
     console.error('Unhandler Error While Delete Product: ', error.toString())
-    res.sendStatus(500)
+    return res.sendStatus(500)
   }
 }
