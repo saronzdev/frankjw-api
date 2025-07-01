@@ -9,7 +9,7 @@ const initProductsDatabase = async () => {
         name TEXT NOT NULL,
         description TEXT,
         category TEXT NOT NULL,
-        karats FLOAT,
+        karats TEXT NOT NULL,
         weight FLOAT,
         price FLOAT,
         pictures TEXT,
