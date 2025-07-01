@@ -9,8 +9,11 @@ export const addProduct = async (req: Request, res: Response) => {
   const data = req.body
   const productData = createProductData(data)
 
+  console.log('productData: ', productData.productId)
+
   if (!validateProduct(productData)) return res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
-  if ((await isProductExist(productData.productId)).exist) return res.status(400).json({ code: ErrorCodes.AlreadyExist })
+  if ((await isProductExist(productData.productId)).exist)
+    return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
 
   try {
     await turso.execute({
@@ -49,9 +52,9 @@ export const updateProduct = async (req: Request, res: Response) => {
 
     if (!validateProduct(productData)) return res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
     const isExist = await isProductExist(productData.productId)
-    if (isExist.exist && isExist.id !== id) return res.status(400).json({ code: ErrorCodes.AlreadyExist })
+    if (isExist.exist && isExist.id !== id) return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
 
-      const action = await turso.execute({
+    const action = await turso.execute({
       sql: 'UPDATE products SET productId = ?, name = ?, description = ?, category = ?, price = ?, weight = ?, karats = ?, pictures = ? WHERE id = ?',
       args: [
         productData.productId.toString().toLowerCase(),
@@ -69,7 +72,7 @@ export const updateProduct = async (req: Request, res: Response) => {
     if (action.rowsAffected > 0) {
       res.sendStatus(200)
     }
-    res.sendStatus(404)
+    res.status(404).json({ code: ErrorCodes.ProductNotFound })
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Error While Creating Product: ', error.message)
@@ -93,7 +96,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
     if (action.rowsAffected > 0) {
       res.json({ message: 'Product Deleted Successfully' })
     }
-    res.status(404).json({ message: 'Product Not Found' })
+    res.status(404).json({ code: ErrorCodes.ProductNotFound })
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Unhandler Error While Delete Product: ', error.message)

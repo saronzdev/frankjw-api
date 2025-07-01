@@ -32,9 +32,10 @@ export const isProductExist = async (productId: string) => {
       sql: 'SELECT * FROM products WHERE productId = ?',
       args: [productId]
     })
-    return { exist: product.rows.length > 0, id: product.rows[0].id || null }
+    const exist = product.rows.length > 0
+    if (!exist) return { exist: false, id: null }
+    return { exist: true, id: product.rows[0].id}
   } catch (error) {
-    console.error('Error: ', error)
     return { exist: false, id: null}
   }
 }

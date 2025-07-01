@@ -7,6 +7,11 @@ export enum ErrorCodes {
   PasswordIncorrect = 1005,
   AuthError = 1006,
 
+  //Products Errors
+  ProductNotFound = 1101,
+  ProductAlreadyExist = 1102,
+  ProductIdInvalid = 1103,
+
   //Validations Errors
   InvalidMail = 2001,
   RequiredFieldMissing = 2002,
