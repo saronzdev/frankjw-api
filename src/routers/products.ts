@@ -3,7 +3,6 @@ import { auth } from '../middlewares/auth'
 import { getAll, getOneByCategory, getCats } from '../controllers/products/client'
 import { addProduct, updateProduct, deleteProduct } from '../controllers/products/admin'
 import { RequestHandler } from 'express'
-import { uploadMultiple } from '../middlewares/upload'
 
 export const products = Router()
 
