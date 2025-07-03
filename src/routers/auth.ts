@@ -1,13 +1,14 @@
 import { Router } from 'express'
 import { validateUser, validateUserLogin } from '../types/user'
 import { User, UserIn } from '../types/types'
-import { turso } from '../utils/config'
+import { isProd, turso } from '../utils/config'
 import { LibsqlError } from '@libsql/client'
 import bcrypt from 'bcrypt'
 import { saltRounds, secret } from '../utils/config'
 import jwt from 'jsonwebtoken'
 import { isAdmin, isUserExist } from '../utils/validations'
 import { ErrorCodes } from '../types/types'
+import { serialize } from 'cookie'
 
 export const auth = Router()
 
@@ -28,8 +29,15 @@ auth.post('/login', async (req, res): Promise<any> => {
 
     const expiresIn = '7d'
     const token = jwt.sign({ email: user.email }, secret, { expiresIn })
-    const role = await isAdmin(user.email) ? 'admin' : 'client'
-    res.json({ token, role })
+    const role = (await isAdmin(user.email)) ? 'admin' : 'client'
+    const cookie = serialize('token', token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      maxAge: 60 * 60 * 24 * 7
+    })
+    res.setHeader('Set-Cookie', cookie)
+    res.status(200).json({ role })
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Error While Login User: ', error.message)
@@ -54,9 +62,30 @@ auth.post('/register', async (req, res): Promise<any> => {
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Error While Register User: ', error.message)
-      return res.status(500).json({code: ErrorCodes.DatabaseError})
+      return res.status(500).json({ code: ErrorCodes.DatabaseError })
     }
     console.error('Unhandler Error While Register User: ', error.toString())
     return res.sendStatus(500)
+  }
+})
+
+auth.get('/me', async (req, res): Promise<any> => {
+  const token = req.cookies.token
+  if (!token) return res.status(401).json({ code: ErrorCodes.AccessDenied })
+  try {
+    const user = jwt.verify(token, secret) as User
+    if (!(await isUserExist(user.email))) {
+      return res.status(404).json({ code: ErrorCodes.UserNotFound })
+    }
+    const role = (await isAdmin(user.email)) ? 'admin' : 'client'
+    console.log('User Role: ', role)
+    res.status(200).json({ email: user.email, role })
+  } catch (error: any) {
+    if (error instanceof jwt.TokenExpiredError) {
+      console.error('Token Expired Error')
+      return res.status(401).json({ code: ErrorCodes.TokenExpired })
+    }
+    console.error('Auth Error: ', error.toString())
+    return res.status(500).json({ code: ErrorCodes.AuthError })
   }
 })

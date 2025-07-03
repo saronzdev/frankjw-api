@@ -1,25 +1,24 @@
 import { Config } from '@libsql/client'
 import { createClient } from '@libsql/client'
 import type { ProductIn } from '../types/product'
+import { CorsOptions } from 'cors'
 
 export const saltRounds = Number(process.env.SALT_ROUNDS) || 10
 export const secret = process.env.JWT_SECRET as string
 
 const tursoUrl = process.env.TURSO_URL as string
 const tursoToken = process.env.TURSO_TOKEN as string
-export const supabaseUrl = process.env.SUPABASE_URL as string
-export const supabaseToken = process.env.SUPABASE_TOKEN as string
 
 export const createProductData = (data: ProductIn) => {
   const productData: ProductIn = {
-      productId: data.productId.toString().toLowerCase(),
-      name: data.name,
-      description: data.description,
-      category: data.category.toLowerCase(),
-      price: Number(data.price),
-      weight: Number(data.weight),
-      karats: Number(data.karats),
-      pictures: data.pictures
+    productId: data.productId.toString().toLowerCase(),
+    name: data.name,
+    description: data.description,
+    category: data.category.toLowerCase(),
+    price: Number(data.price),
+    weight: Number(data.weight),
+    karats: Number(data.karats),
+    pictures: data.pictures
   }
   return productData
 }
@@ -27,16 +26,16 @@ export const isProd = process.env.NODE_ENV === 'production'
 const tursoOptions: Config = isProd ? { url: tursoUrl, authToken: tursoToken } : { url: 'file:./local.db' }
 export const turso = createClient(tursoOptions)
 
-export function buildUpdateQuery(table: string, id: number, fields: object) {
-  const setClauses: string[] = []
-  const values: string | number[] = []
+const allowedOrigins = ['http://localhost:5173', 'https://frankjoyeriacuba.com', 'https://frankjw.vercel.app']
 
-  for (const [key, value] of Object.entries(fields)) {
-    setClauses.push(`${key} = ?`)
-    values.push(value)
-  }
-  values.push(id)
-  const query = `UPDATE ${table} SET ${setClauses.join(', ')} WHERE id = ?`
-
-  return { query, values }
+export const corsOptions: CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('El origen no está permitido'))
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
 }

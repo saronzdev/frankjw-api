@@ -10,7 +10,7 @@ type User = {
 }
 
 export const auth = async (req: MyRequest, res: Response, next: any) => {
-  const token = req.headers.authorization?.split(' ')[1] as string
+  const token = req.cookies.token
   if (!token) {
     res.status(401).json({ code: ErrorCodes.AccessDenied })
   }
@@ -27,7 +27,7 @@ export const auth = async (req: MyRequest, res: Response, next: any) => {
       if (error.name === 'TokenExpiredError') {
         console.error('Token Expired Error')
         res.status(401).json({ code: ErrorCodes.TokenExpired })
-      } 
+      }
     }
     console.error('Auth Error: ', error.toString())
     res.status(500).json({ code: ErrorCodes.AuthError })
