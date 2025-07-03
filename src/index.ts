@@ -1,9 +1,11 @@
-import express, { Router } from 'express'
+import express from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
 import { initdb } from './utils/database'
 import { products } from './routers/products'
 import { auth } from './routers/auth'
+import cookieParser from 'cookie-parser'
+import { corsOptions } from './utils/config'
 
 const PORT = process.env.PORT ?? 3000
 initdb().catch((error) => {
@@ -13,12 +15,13 @@ initdb().catch((error) => {
 
 export const app = express()
 
-app.use(cors())
+app.use(cookieParser())
+app.use(cors(corsOptions))
 app.use(morgan('dev'))
 app.use(express.json())
 
 app.get('/', (req, res) => {
-  res.json({message: 'Server working correctly'})
+  res.json({ message: 'Server working correctly' })
 })
 
 app.use('/api/v1', products)

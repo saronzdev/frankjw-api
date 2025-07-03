@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { auth } from '../middlewares/auth'
-import { getAll, getOneByCategory, getCats } from '../controllers/products/client'
+import { getAll, getByCategory, getCats } from '../controllers/products/client'
 import { addProduct, updateProduct, deleteProduct } from '../controllers/products/admin'
 import { RequestHandler } from 'express'
 
@@ -9,7 +9,7 @@ export const products = Router()
 // Rutas públicas (GET para clientes)
 products.get('/products', getAll as RequestHandler)
 products.get('/products/cats', getCats as RequestHandler)
-products.get('/products/:category', getOneByCategory as RequestHandler)
+products.get('/products/category/:category', getByCategory as RequestHandler)
 
 // Rutas protegidas (POST, PUT, DELETE para admin)
 products.post('/products', auth as RequestHandler, addProduct as RequestHandler)
