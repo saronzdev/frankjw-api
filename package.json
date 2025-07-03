@@ -13,20 +13,20 @@
   "keywords": [],
   "author": "saronzdev",
   "license": "ISC",
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@10.12.4",
   "dependencies": {
     "@libsql/client": "^0.15.9",
-    "@supabase/supabase-js": "^2.50.2",
-    "@types/multer": "^1.4.13",
     "bcrypt": "^6.0.0",
+    "cookie": "^1.0.2",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "morgan": "^1.10.0",
-    "multer": "^2.0.1"
+    "morgan": "^1.10.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
+    "@types/cookie-parser": "^1.4.9",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",

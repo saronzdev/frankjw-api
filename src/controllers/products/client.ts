@@ -39,29 +39,7 @@ export const getCats = async (req: Request, res: Response) => {
   }
 }
 
-// export const getOneById = async (req: Request, res: Response) => {
-//   const { id } = req.params
-
-//   if (!id) res.status(400).json(ErrorCodes)
-//   try {
-//     const product = await turso.execute({
-//       sql: 'SELECT * FROM products WHERE id = ?',
-//       args: [id]
-//     })
-//     if (!product.rows[0]) {
-//       res.sendStatus(404)
-//     }
-//     res.json(product.rows[0])
-//   } catch (error) {
-//     if (error instanceof LibsqlError) {
-//       console.error('Error While Geting Product : ', error.cause)
-//       res.status(500).json({ code: ErrorCodes.DatabaseError })
-//     }
-//     res.sendStatus(500)
-//   }
-// }
-
-export const getOneByCategory = async (req: Request, res: Response) => {
+export const getByCategory = async (req: Request, res: Response) => {
   const { category } = req.params
   try {
     const products = await turso.execute({
