@@ -26,11 +26,13 @@ export const isProd = process.env.NODE_ENV === 'production'
 const tursoOptions: Config = isProd ? { url: tursoUrl, authToken: tursoToken } : { url: 'file:./local.db' }
 export const turso = createClient(tursoOptions)
 
+const frankjoyeriacubaRegex = /^https?:\/\/([a-zA-Z0-9-]+\.)*frankjoyeriacuba\.com$/
+
 const allowedOrigins = ['http://localhost:5173', 'https://frankjoyeriacuba.com', 'https://frankjw.vercel.app']
 
 export const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || frankjoyeriacubaRegex.test(origin)) {
       callback(null, true)
     } else {
       callback(new Error('El origen no está permitido'))
