@@ -73,6 +73,7 @@ auth.get('/me', async (req, res): Promise<any> => {
   const token = req.cookies.token
   if (!token) return res.status(401).json({ code: ErrorCodes.AccessDenied })
   try {
+    console.log(token)
     const user = jwt.verify(token, secret) as User
     if (!(await isUserExist(user.email))) {
       return res.status(404).json({ code: ErrorCodes.UserNotFound })
