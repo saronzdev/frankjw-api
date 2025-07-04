@@ -70,6 +70,7 @@ auth.post('/register', async (req, res): Promise<any> => {
 })
 
 auth.get('/me', async (req, res): Promise<any> => {
+  console.log('aqui')
   const token = req.cookies.token
   if (!token) return res.status(401).json({ code: ErrorCodes.AccessDenied })
   try {
