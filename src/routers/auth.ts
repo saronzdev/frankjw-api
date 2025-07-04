@@ -34,7 +34,8 @@ auth.post('/login', async (req, res): Promise<any> => {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax',
-      maxAge: 60 * 60 * 24 * 7
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/'
     })
     res.setHeader('Set-Cookie', cookie)
     res.status(200).json({ role })
@@ -70,17 +71,15 @@ auth.post('/register', async (req, res): Promise<any> => {
 })
 
 auth.get('/me', async (req, res): Promise<any> => {
-  console.log('aqui')
   const token = req.cookies.token
+  console.log(token)
   if (!token) return res.status(401).json({ code: ErrorCodes.AccessDenied })
   try {
-    console.log(token)
     const user = jwt.verify(token, secret) as User
     if (!(await isUserExist(user.email))) {
       return res.status(404).json({ code: ErrorCodes.UserNotFound })
     }
     const role = (await isAdmin(user.email)) ? 'admin' : 'client'
-    console.log('User Role: ', role)
     res.status(200).json({ email: user.email, role })
   } catch (error: any) {
     if (error instanceof jwt.TokenExpiredError) {

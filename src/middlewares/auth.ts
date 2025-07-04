@@ -12,24 +12,24 @@ type User = {
 export const auth = async (req: MyRequest, res: Response, next: any) => {
   const token = req.cookies.token
   if (!token) {
-    res.status(401).json({ code: ErrorCodes.AccessDenied })
+    return res.status(401).json({ code: ErrorCodes.AccessDenied })
   }
   try {
     const user = jwt.verify(token, secret) as User
     req.user = user
     if (!(await isAdmin(user.email))) {
       console.error('User Is Not Admin')
-      res.status(401).json({ code: ErrorCodes.AccessDenied })
+      return res.status(401).json({ code: ErrorCodes.AccessDenied })
     }
     next()
   } catch (error: any) {
     if (error instanceof jwt.TokenExpiredError) {
       if (error.name === 'TokenExpiredError') {
         console.error('Token Expired Error')
-        res.status(401).json({ code: ErrorCodes.TokenExpired })
+        return res.status(401).json({ code: ErrorCodes.TokenExpired })
       }
     }
     console.error('Auth Error: ', error.toString())
-    res.status(500).json({ code: ErrorCodes.AuthError })
+    return res.status(500).json({ code: ErrorCodes.AuthError })
   }
 }
