@@ -16,7 +16,6 @@ initdb().catch((error) => {
 export const app = express()
 
 app.use(cors(corsOptions))
-// app.options('*', cors(corsOptions))
 app.use(cookieParser())
 app.use(morgan('dev'))
 app.use(express.json())
