@@ -22,17 +22,3 @@ export enum ErrorCodes {
   DatabaseError = 3001,
   UploadFileError = 3002
 }
-
-export type UserIn = {
-  name: string
-  password: string
-  email: string
-}
-
-export type UserOut = {
-  id: number
-  role: 'admin' | 'client'
-  createdAt: Date
-}
-
-export type User = UserIn & UserOut

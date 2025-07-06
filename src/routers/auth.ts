@@ -1,13 +1,13 @@
 import { Router } from 'express'
 import { validateUser, validateUserLogin } from '../types/user'
-import { User, UserIn } from '../types/types'
+import type { User, UserIn } from '../types/user'
 import { isProd, turso } from '../utils/config'
 import { LibsqlError } from '@libsql/client'
 import bcrypt from 'bcrypt'
 import { saltRounds, secret } from '../utils/config'
 import jwt from 'jsonwebtoken'
 import { isAdmin, isUserExist } from '../utils/validations'
-import { ErrorCodes } from '../types/types'
+import { ErrorCodes } from '../types/errors'
 import { serialize } from 'cookie'
 
 export const auth = Router()
@@ -72,7 +72,6 @@ auth.post('/register', async (req, res): Promise<any> => {
 
 auth.get('/me', async (req, res): Promise<any> => {
   const token = req.cookies.token
-  console.log(token)
   if (!token) return res.status(401).json({ code: ErrorCodes.AccessDenied })
   try {
     const user = jwt.verify(token, secret) as User

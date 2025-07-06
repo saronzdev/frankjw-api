@@ -13,10 +13,13 @@ const initProductsDatabase = async () => {
         weight FLOAT,
         price FLOAT,
         pictures TEXT,
+        sales INTEGER DEFAULT '0',
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-  `) 
-  }catch (error) {throw new Error('Failed to initialize products database')}
+  `)
+  } catch (error) {
+    throw new Error('Failed to initialize products database')
+  }
 }
 
 const initUsersDatabase = async () => {
@@ -30,7 +33,9 @@ const initUsersDatabase = async () => {
         role TEXT,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`)
-    } catch (error) {throw new Error('Failed to initialize users database')}
+  } catch (error) {
+    throw new Error('Failed to initialize users database')
+  }
 }
 
 export const initdb = async () => {

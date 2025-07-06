@@ -1,8 +1,16 @@
-export interface UserIn {
+export type UserIn = {
   name: string
-  email: string
   password: string
+  email: string
 }
+
+export type UserOut = {
+  id: number
+  role: 'admin' | 'client'
+  createdAt: Date
+}
+
+export type User = UserIn & UserOut
 
 export const validateUser = (data: any): data is UserIn => {
   return typeof data.name === 'string' && typeof data.email === 'string' && typeof data.password === 'string'

@@ -1,13 +1,15 @@
-export interface ProductIn {
+export type ProductIn = {
   productId: string
   name: string
   description: string
   category: string
   price: number
   weight: number
-  karats: number
+  karats: string
   pictures?: string[]
 }
+
+export type ProductInRefactor = Omit<ProductIn, 'karats'> & { karats: number[] }
 
 export type ProductOut = {
   id: number
@@ -24,7 +26,6 @@ export const validateProduct = (data: any): data is ProductIn => {
     typeof data.category === 'string' &&
     typeof data.description === 'string' &&
     typeof data.price === 'number' &&
-    typeof data.weight === 'number' &&
-    typeof data.karats === 'number'
+    typeof data.weight === 'number'
   )
 }

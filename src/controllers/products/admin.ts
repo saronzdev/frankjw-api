@@ -3,7 +3,7 @@ import { createProductData, turso } from '../../utils/config'
 import { LibsqlError } from '@libsql/client'
 import { Request, Response } from 'express'
 import { isProductExist } from '../../utils/validations'
-import { ErrorCodes } from '../../types/types'
+import { ErrorCodes } from '../../types/errors'
 
 export const addProduct = async (req: Request, res: Response) => {
   const data = req.body
@@ -12,7 +12,6 @@ export const addProduct = async (req: Request, res: Response) => {
   if (!validateProduct(productData)) return res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
   if ((await isProductExist(productData.productId)).exist)
     return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
-
   try {
     await turso.execute({
       sql: 'INSERT INTO products (productId, name, description, category, price, weight, karats, pictures) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -23,7 +22,7 @@ export const addProduct = async (req: Request, res: Response) => {
         productData.category,
         productData.price,
         productData.weight,
-        productData.karats,
+        JSON.stringify(productData.karats),
         JSON.stringify(productData.pictures)
       ]
     })
@@ -60,7 +59,7 @@ export const updateProduct = async (req: Request, res: Response) => {
         productData.category.toLowerCase(),
         productData.price,
         productData.weight,
-        productData.karats,
+        JSON.stringify(productData.karats),
         JSON.stringify(productData.pictures),
         id
       ]
