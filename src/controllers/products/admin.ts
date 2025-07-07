@@ -14,7 +14,7 @@ export const addProduct = async (req: Request, res: Response) => {
     return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
   try {
     await turso.execute({
-      sql: 'INSERT INTO products (productId, name, description, category, price, weight, karats, pictures) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      sql: 'INSERT INTO products (productId, name, description, category, price, weight, karats, pictures, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       args: [
         productData.productId,
         productData.name,
@@ -23,7 +23,8 @@ export const addProduct = async (req: Request, res: Response) => {
         productData.price,
         productData.weight,
         JSON.stringify(productData.karats),
-        JSON.stringify(productData.pictures)
+        JSON.stringify(productData.pictures),
+        productData.isActive
       ]
     })
     res.sendStatus(201)
