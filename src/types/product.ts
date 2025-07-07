@@ -6,6 +6,7 @@ export type ProductIn = {
   price: number
   weight: number
   karats: string
+  isActive: number
   pictures?: string[]
 }
 

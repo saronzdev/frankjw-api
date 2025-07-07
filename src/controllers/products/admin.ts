@@ -51,7 +51,7 @@ export const updateProduct = async (req: Request, res: Response) => {
     if (isExist.exist && isExist.id !== id) return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
 
     const action = await turso.execute({
-      sql: 'UPDATE products SET productId = ?, name = ?, description = ?, category = ?, price = ?, weight = ?, karats = ?, pictures = ? WHERE id = ?',
+      sql: 'UPDATE products SET productId = ?, name = ?, description = ?, category = ?, price = ?, weight = ?, karats = ?, pictures = ?, isActive = ? WHERE id = ?',
       args: [
         productData.productId.toString().toLowerCase(),
         productData.name,
@@ -61,6 +61,7 @@ export const updateProduct = async (req: Request, res: Response) => {
         productData.weight,
         JSON.stringify(productData.karats),
         JSON.stringify(productData.pictures),
+        productData.isActive,
         id
       ]
     })

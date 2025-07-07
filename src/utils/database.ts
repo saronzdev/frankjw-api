@@ -14,6 +14,7 @@ const initProductsDatabase = async () => {
         price FLOAT,
         pictures TEXT,
         sales INTEGER DEFAULT '0',
+        isActive BOOLEAN,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
   `)
