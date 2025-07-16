@@ -35,12 +35,11 @@ export const turso = createClient(tursoOptions)
 
 const com = /^https?:\/\/([a-zA-Z0-9-]+\.)*frankjoyeriacuba\.com$/
 const vercel = /^https:\/\/frankjw[\w-]*\.vercel\.app$/
-
-const allowedOrigins = ['http://localhost:5173', 'https://frankjoyeriacuba.com', 'https://frankjw.vercel.app']
+const local = /^http:\/\/localhost:*/
 
 export const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || com.test(origin) || vercel.test(origin)) {
+    if (!origin || local.test(origin) || com.test(origin) || vercel.test(origin)) {
       callback(null, true)
     } else {
       callback(new Error('El origen no está permitido'))
