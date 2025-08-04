@@ -1,9 +1,9 @@
-import { validateProduct } from '../../types/product'
+import { validateProduct } from '../../utils/validations'
 import { createProductData, turso } from '../../utils/config'
 import { LibsqlError } from '@libsql/client'
 import { Request, Response } from 'express'
 import { isProductExist } from '../../utils/validations'
-import { ErrorCodes } from '../../types/errors'
+import { ErrorCodes } from '../../utils/config'
 
 export const addProduct = async (req: Request, res: Response) => {
   const data = req.body
@@ -14,10 +14,9 @@ export const addProduct = async (req: Request, res: Response) => {
     return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
   try {
     await turso.execute({
-      sql: 'INSERT INTO products (productId, name, description, category, price, weight, karats, pictures, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      sql: 'INSERT INTO products (productId, description, category, price, weight, karats, pictures, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       args: [
         productData.productId,
-        productData.name,
         productData.description,
         productData.category,
         productData.price,
@@ -52,10 +51,9 @@ export const updateProduct = async (req: Request, res: Response) => {
     if (isExist.exist && isExist.id !== id) return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
 
     const action = await turso.execute({
-      sql: 'UPDATE products SET productId = ?, name = ?, description = ?, category = ?, price = ?, weight = ?, karats = ?, pictures = ?, isActive = ? WHERE id = ?',
+      sql: 'UPDATE products SET productId = ?, description = ?, category = ?, price = ?, weight = ?, karats = ?, pictures = ?, isActive = ? WHERE id = ?',
       args: [
         productData.productId.toString().toLowerCase(),
-        productData.name,
         productData.description,
         productData.category.toLowerCase(),
         productData.price,

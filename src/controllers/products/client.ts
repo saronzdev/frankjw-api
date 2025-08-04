@@ -1,8 +1,8 @@
 import { turso } from '../../utils/config'
 import { LibsqlError } from '@libsql/client'
 import { Request, Response } from 'express'
-import { ErrorCodes } from '../../types/errors'
-import { ProductType } from '../../types/product'
+import { ErrorCodes } from '../../utils/config'
+import { ProductType } from '../../types'
 
 export const getAll = async (req: Request, res: Response) => {
   try {

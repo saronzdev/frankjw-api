@@ -1,13 +1,13 @@
 import { Router } from 'express'
-import { validateUser, validateUserLogin } from '../types/user'
-import type { User, UserIn } from '../types/user'
+import { validateUser, validateUserLogin } from '../utils/validations'
+import type { User, UserIn } from '../types'
 import { isProd, turso } from '../utils/config'
 import { LibsqlError } from '@libsql/client'
 import bcrypt from 'bcrypt'
 import { saltRounds, secret } from '../utils/config'
 import jwt from 'jsonwebtoken'
 import { isAdmin, isUserExist } from '../utils/validations'
-import { ErrorCodes } from '../types/errors'
+import { ErrorCodes } from '../utils/config'
 import { serialize } from 'cookie'
 
 export const auth = Router()

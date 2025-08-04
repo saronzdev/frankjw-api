@@ -13,7 +13,6 @@
   "keywords": [],
   "author": "saronzdev",
   "license": "ISC",
-  "packageManager": "pnpm@10.12.4",
   "dependencies": {
     "@libsql/client": "^0.15.9",
     "bcrypt": "^6.0.0",

@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import { secret } from '../utils/config'
 import { isAdmin } from '../utils/validations'
-import { ErrorCodes } from '../types/errors'
+import { ErrorCodes } from '../utils/config'
 
 type MyRequest = Request & { user: any }
 type User = {

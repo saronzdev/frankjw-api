@@ -1,6 +1,6 @@
+//Products
 export type ProductIn = {
   productId: string
-  name: string
   description: string
   category: string
   price: number
@@ -20,13 +20,17 @@ export type ProductOut = {
 
 export type ProductType = ProductIn & ProductOut
 
-export const validateProduct = (data: any): data is ProductIn => {
-  return (
-    typeof data.productId === 'string' &&
-    typeof data.name === 'string' &&
-    typeof data.category === 'string' &&
-    typeof data.description === 'string' &&
-    typeof data.price === 'number' &&
-    typeof data.weight === 'number'
-  )
+//Users 
+export type UserIn = {
+  name: string
+  password: string
+  email: string
 }
+
+export type UserOut = {
+  id: number
+  role: 'admin' | 'client'
+  createdAt: Date
+}
+
+export type User = UserIn & UserOut
