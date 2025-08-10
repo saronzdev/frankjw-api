@@ -6,7 +6,6 @@ const initProductsDatabase = async () => {
       CREATE TABLE IF NOT EXISTS products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         productId TEXT NOT NULL,
-        name TEXT NOT NULL,
         description TEXT,
         category TEXT NOT NULL,
         karats TEXT NOT NULL,
