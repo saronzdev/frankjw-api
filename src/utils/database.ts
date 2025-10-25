@@ -1,4 +1,5 @@
 import { turso } from './config'
+import { migrateCreatedAtTimestamps, migrateCategoryNames } from './migrations'
 
 const initProductsDatabase = async () => {
   try {
@@ -14,7 +15,7 @@ const initProductsDatabase = async () => {
         pictures TEXT,
         sales INTEGER DEFAULT '0',
         isActive BOOLEAN,
-        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        createdAt INTEGER DEFAULT (cast(unixepoch() * 1000 as integer))
       )
   `)
   } catch (error) {
@@ -31,7 +32,7 @@ const initUsersDatabase = async () => {
         email TEXT,
         password TEXT,
         role TEXT,
-        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        createdAt INTEGER DEFAULT (cast(unixepoch() * 1000 as integer))
       )`)
   } catch (error) {
     throw new Error('Failed to initialize users database')
@@ -41,4 +42,6 @@ const initUsersDatabase = async () => {
 export const initdb = async () => {
   await initProductsDatabase()
   await initUsersDatabase()
+  await migrateCreatedAtTimestamps()
+  await migrateCategoryNames()
 }
