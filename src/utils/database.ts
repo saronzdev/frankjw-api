@@ -1,5 +1,4 @@
 import { turso } from './config'
-import { migrateCreatedAtTimestamps, migrateCategoryNames } from './migrations'
 
 let dbInitialized = false
 
@@ -44,17 +43,6 @@ const initUsersDatabase = async () => {
   }
 }
 
-const runMigrations = async () => {
-  try {
-    console.log('Running migrations...')
-    await migrateCreatedAtTimestamps()
-    await migrateCategoryNames()
-    console.log('All migrations completed successfully')
-  } catch (error) {
-    console.error('Migration error:', error)
-  }
-}
-
 export const initdb = async () => {
   if (dbInitialized) {
     console.log('Database already initialized')
@@ -66,8 +54,6 @@ export const initdb = async () => {
     await initProductsDatabase()
     await initUsersDatabase()
     console.log('Database tables created/verified')
-
-    await runMigrations()
     dbInitialized = true
   } catch (error) {
     console.error('Error initializing database:', error)

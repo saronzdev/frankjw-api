@@ -10,7 +10,6 @@ import { corsOptions } from './utils/config'
 const PORT = process.env.PORT ?? 3000
 initdb().catch((error) => {
   console.error('Error initializing database:', error)
-  process.exit(1)
 })
 
 export const app = express()
