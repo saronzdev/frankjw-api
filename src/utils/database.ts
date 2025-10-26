@@ -15,9 +15,9 @@ const initProductsDatabase = async () => {
         weight FLOAT,
         price FLOAT,
         pictures TEXT,
-        sales INTEGER DEFAULT '0',
+        sales INTEGER DEFAULT 0,
         isActive BOOLEAN,
-        createdAt INTEGER DEFAULT (cast(unixepoch() * 1000 as integer))
+        createdAt INTEGER DEFAULT (CAST(unixepoch() * 1000 AS INTEGER))
       )
     `)
   } catch (error) {
@@ -35,7 +35,7 @@ const initUsersDatabase = async () => {
         email TEXT,
         password TEXT,
         role TEXT,
-        createdAt INTEGER DEFAULT (cast(unixepoch() * 1000 as integer))
+        createdAt INTEGER DEFAULT (CAST(unixepoch() * 1000 AS INTEGER))
       )
     `)
   } catch (error) {
@@ -52,12 +52,10 @@ const runMigrations = async () => {
     console.log('All migrations completed successfully')
   } catch (error) {
     console.error('Migration error:', error)
-    // No lanzar error, continuar de todos modos
   }
 }
 
 export const initdb = async () => {
-  // Evitar múltiples inicializaciones en serverless
   if (dbInitialized) {
     console.log('Database already initialized')
     return
@@ -69,13 +67,10 @@ export const initdb = async () => {
     await initUsersDatabase()
     console.log('Database tables created/verified')
 
-    // Ejecutar migraciones después
     await runMigrations()
-
     dbInitialized = true
   } catch (error) {
     console.error('Error initializing database:', error)
-    // En desarrollo, lanzar error; en producción, continuar
     if (process.env.NODE_ENV === 'development') {
       throw error
     }

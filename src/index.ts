@@ -27,6 +27,8 @@ app.get('/', (req, res) => {
 app.use('/api/v1', products)
 app.use('/api/v1/auth', auth)
 
-app.listen(PORT, () => {
-  console.log('Server running on port', PORT)
-})
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log('Server running on port', PORT)
+  })
+}
