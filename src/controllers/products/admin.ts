@@ -14,7 +14,7 @@ export const addProduct = async (req: Request, res: Response) => {
     return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
   try {
     await turso.execute({
-      sql: 'INSERT INTO products (productId, description, category, price, weight, karats, pictures, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      sql: 'INSERT INTO products (productId, description, category, price, weight, karats, pictures, isActive, hasDiscount, offerPrice) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       args: [
         productData.productId,
         productData.description,
@@ -23,7 +23,9 @@ export const addProduct = async (req: Request, res: Response) => {
         productData.weight,
         JSON.stringify(productData.karats),
         JSON.stringify(productData.pictures),
-        productData.isActive
+        productData.isActive,
+        productData.hasDiscount,
+        productData.offerPrice ?? null
       ]
     })
     res.sendStatus(201)
@@ -51,7 +53,7 @@ export const updateProduct = async (req: Request, res: Response) => {
     if (isExist.exist && isExist.id !== id) return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
 
     const action = await turso.execute({
-      sql: 'UPDATE products SET productId = ?, description = ?, category = ?, price = ?, weight = ?, karats = ?, pictures = ?, isActive = ? WHERE id = ?',
+      sql: 'UPDATE products SET productId = ?, description = ?, category = ?, price = ?, weight = ?, karats = ?, pictures = ?, isActive = ?, hasDiscount = ?, offerPrice = ? WHERE id = ?',
       args: [
         productData.productId.toString().toLowerCase(),
         productData.description,
@@ -61,6 +63,8 @@ export const updateProduct = async (req: Request, res: Response) => {
         JSON.stringify(productData.karats),
         JSON.stringify(productData.pictures),
         productData.isActive,
+        productData.hasDiscount,
+        productData.offerPrice ?? null,
         id
       ]
     })

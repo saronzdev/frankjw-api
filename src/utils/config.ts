@@ -35,10 +35,13 @@ const tursoUrl = process.env.TURSO_URL as string
 const tursoToken = process.env.TURSO_TOKEN as string
 
 export const createProductData = (data: ProductIn) => {
-  let karats: number[] = []
-  if (Array.isArray(data.karats)) karats = data.karats.map(Number)
-  else if (typeof data.karats === 'string') karats = data.karats.split(/\s+/).map(Number)
-  else if (typeof data.karats === 'number') karats = [data.karats]
+  let karatsArray: number[]
+
+  try {
+    karatsArray = typeof data.karats === 'string' ? JSON.parse(data.karats) : data.karats
+  } catch {
+    karatsArray = []
+  }
 
   const productData: ProductInRefactor = {
     productId: data.productId.toString().toLowerCase(),
@@ -46,9 +49,11 @@ export const createProductData = (data: ProductIn) => {
     category: data.category.toLowerCase(),
     price: Number(data.price),
     weight: Number(data.weight),
-    karats,
+    karats: karatsArray,
     isActive: data.isActive ? 1 : 0,
-    pictures: data.pictures
+    pictures: data.pictures,
+    hasDiscount: data.hasDiscount ? 1 : 0,
+    offerPrice: data.offerPrice ? Number(data.offerPrice) : undefined
   }
   return productData
 }

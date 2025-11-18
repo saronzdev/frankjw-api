@@ -1,16 +1,21 @@
-//Products
 export type ProductIn = {
   productId: string
   description: string
   category: string
   price: number
   weight: number
-  karats: string
-  isActive: number
+  karats: number[]
+  isActive: boolean
   pictures?: string[]
+  hasDiscount: boolean
+  offerPrice?: number
 }
 
-export type ProductInRefactor = Omit<ProductIn, 'karats'> & { karats: number[] }
+export type ProductInRefactor = Omit<ProductIn, 'karats', 'isActive', 'hasDiscount'> & {
+  karats: number[]
+  isActive: number
+  hasDiscount: number
+}
 
 export type ProductOut = {
   id: number
@@ -20,7 +25,6 @@ export type ProductOut = {
 
 export type ProductType = ProductIn & ProductOut
 
-//Users 
 export type UserIn = {
   name: string
   password: string

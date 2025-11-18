@@ -1,5 +1,5 @@
 import { turso } from './config'
-import type {ProductIn, UserIn} from '../types'
+import type { ProductIn, UserIn } from '../types'
 
 export const validateProduct = (data: any): data is ProductIn => {
   return (
@@ -7,7 +7,13 @@ export const validateProduct = (data: any): data is ProductIn => {
     typeof data.category === 'string' &&
     typeof data.description === 'string' &&
     typeof data.price === 'number' &&
-    typeof data.weight === 'number'
+    typeof data.weight === 'number' &&
+    Array.isArray(data.karats) &&
+    data.karats.every((k: number) => typeof k === 'number') &&
+    typeof data.isActive === 'number' &&
+    typeof data.hasDiscount === 'number' &&
+    (data.pictures === undefined || Array.isArray(data.pictures)) &&
+    (data.offerPrice === undefined || typeof data.offerPrice === 'number')
   )
 }
 
@@ -52,8 +58,8 @@ export const isProductExist = async (productId: string) => {
     })
     const exist = product.rows.length > 0
     if (!exist) return { exist: false, id: null }
-    return { exist: true, id: product.rows[0].id}
+    return { exist: true, id: product.rows[0].id }
   } catch (error) {
-    return { exist: false, id: null}
+    return { exist: false, id: null }
   }
 }

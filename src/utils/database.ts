@@ -8,14 +8,16 @@ const initProductsDatabase = async () => {
       CREATE TABLE IF NOT EXISTS products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         productId TEXT NOT NULL,
-        description TEXT,
+        description TEXT NOT NULL,
         category TEXT NOT NULL,
         karats TEXT NOT NULL,
-        weight FLOAT,
-        price FLOAT,
+        weight REAL NOT NULL,
+        price REAL NOT NULL,
         pictures TEXT,
         sales INTEGER DEFAULT 0,
-        isActive BOOLEAN,
+        isActive BOOLEAN NOT NULL,
+        hasDiscount BOOLEAN NOT NULL,
+        offerPrice REAL,
         createdAt INTEGER DEFAULT (CAST(unixepoch() * 1000 AS INTEGER))
       )
     `)
@@ -30,10 +32,10 @@ const initUsersDatabase = async () => {
     await turso.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        email TEXT,
-        password TEXT,
-        role TEXT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT NOT NULL,
         createdAt INTEGER DEFAULT (CAST(unixepoch() * 1000 AS INTEGER))
       )
     `)
