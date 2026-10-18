@@ -6,8 +6,10 @@ import { products } from './routers/products'
 import { auth } from './routers/auth'
 import cookieParser from 'cookie-parser'
 import { corsOptions } from './utils/config'
+import { assertEnv } from './utils/env'
 
 const PORT = process.env.PORT ?? 3000
+assertEnv()
 initdb().catch((error) => {
   console.error('Error initializing database:', error)
 })
