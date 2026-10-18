@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "API from Frank Jewelry",
   "main": "dist/index.js",
+  "packageManager": "pnpm@12.14.0",
   "scripts": {
     "dev": "tsx --env-file .env --watch src/index.ts",
     "build": "pnpm tsc",
