@@ -88,18 +88,6 @@ auth.post('/register', registerLimiter, requireAdmin as RequestHandler, async (r
   }
 })
 
-auth.post('/logout', (req, res) => {
-  const cookie = serialize('token', '', {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
-    maxAge: 0,
-    path: '/'
-  })
-  res.setHeader('Set-Cookie', cookie)
-  res.sendStatus(204)
-})
-
 auth.get('/me', async (req, res): Promise<any> => {
   const token = req.cookies.token
   if (!token) return res.status(401).json({ code: ErrorCodes.AccessDenied })
