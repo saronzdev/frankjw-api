@@ -75,13 +75,11 @@ export const updateProduct = async (req: Request, res: Response) => {
     res.sendStatus(200)
   } catch (error: any) {
     if (error instanceof LibsqlError) {
-      console.error('Error While Creating Product: ', error.message)
-      res.status(500).json({
-        code: ErrorCodes.DatabaseError
-      })
+      console.error('Error While Updating Product: ', error.message)
+      return res.status(500).json({ code: ErrorCodes.DatabaseError })
     }
     console.error('Unhandler Error While Updating Product: ', error.toString())
-    res.sendStatus(500)
+    return res.sendStatus(500)
   }
 }
 
