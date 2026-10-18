@@ -1,7 +1,6 @@
 import { Config } from '@libsql/client'
 import { createClient } from '@libsql/client'
-import type { ProductInRefactor } from '../types'
-import type { ProductInput } from './schemas'
+import type { ProductInput, ProductRow } from '../types'
 import { CorsOptions } from 'cors'
 
 export const ErrorCodes = {
@@ -36,8 +35,8 @@ export const secret = process.env.JWT_SECRET as string
 const tursoUrl = process.env.TURSO_URL as string
 const tursoToken = process.env.TURSO_TOKEN as string
 
-export const createProductData = (data: ProductInput): ProductInRefactor => {
-  const productData: ProductInRefactor = {
+export const createProductData = (data: ProductInput): ProductRow => {
+  const productData: ProductRow = {
     productId: data.productId.toLowerCase(),
     description: data.description,
     category: data.category.toLowerCase(),
