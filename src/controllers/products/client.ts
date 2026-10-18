@@ -4,16 +4,22 @@ import { Request, Response } from 'express'
 import { ErrorCodes } from '../../utils/config'
 import { ProductType } from '../../types'
 
+const parseJson = <T>(value: unknown, fallback: T): T => {
+  if (typeof value !== 'string') return fallback
+  try {
+    return JSON.parse(value) as T
+  } catch {
+    return fallback
+  }
+}
+
 export const getAll = async (req: Request, res: Response) => {
   try {
     const products = await turso.execute(`SELECT * FROM products`)
-    if (products.rows.length === 0) {
-      return res.status(404).json({ code: ErrorCodes.ProductNotFound })
-    }
     const data = products.rows.map((p) => ({
       ...p,
-      pictures: JSON.parse(p.pictures as string),
-      karats: JSON.parse(p.karats as string)
+      pictures: parseJson<string[]>(p.pictures, []),
+      karats: parseJson<number[]>(p.karats, [])
     })) as unknown as ProductType[]
     res.json(data)
   } catch (error: any) {
