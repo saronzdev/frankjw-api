@@ -1,6 +1,29 @@
 import { turso } from './config'
+import { migrateCategoryNames, migrateCreatedAtTimestamps } from './migrations'
 
 let dbInitialized = false
+
+const runMigrations = async () => {
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS migrations (
+      name TEXT PRIMARY KEY,
+      appliedAt INTEGER DEFAULT (CAST(unixepoch() * 1000 AS INTEGER))
+    )
+  `)
+
+  const apply = async (name: string, migration: () => Promise<void>) => {
+    const existing = await turso.execute({
+      sql: 'SELECT 1 FROM migrations WHERE name = ?',
+      args: [name]
+    })
+    if (existing.rows.length > 0) return
+    await migration()
+    await turso.execute({ sql: 'INSERT INTO migrations (name) VALUES (?)', args: [name] })
+  }
+
+  await apply('createdAt_timestamps', migrateCreatedAtTimestamps)
+  await apply('category_names', migrateCategoryNames)
+}
 
 const initProductsDatabase = async () => {
   try {
@@ -75,6 +98,7 @@ export const initdb = async () => {
     await initProductsDatabase()
     await initUsersDatabase()
     await initProductsUniqueIndex()
+    await runMigrations()
     console.log('Database tables created/verified')
     dbInitialized = true
   } catch (error) {
