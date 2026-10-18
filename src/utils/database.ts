@@ -79,8 +79,6 @@ export const initdb = async () => {
     dbInitialized = true
   } catch (error) {
     console.error('Error initializing database:', error)
-    if (process.env.NODE_ENV === 'development') {
-      throw error
-    }
+    throw error
   }
 }
