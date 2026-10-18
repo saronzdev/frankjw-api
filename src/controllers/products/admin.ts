@@ -86,6 +86,7 @@ export const updateProduct = async (req: Request, res: Response) => {
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id)
+    if (!id || isNaN(id)) return res.status(400).json({ code: ErrorCodes.InvalidId })
     const action = await turso.execute({
       sql: 'DELETE FROM products WHERE id = ?',
       args: [id]
