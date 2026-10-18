@@ -1,21 +1,5 @@
 import { turso } from './config'
-import type { ProductIn, UserIn } from '../types'
-
-export const validateProduct = (data: any): data is ProductIn => {
-  return (
-    typeof data.productId === 'string' &&
-    typeof data.category === 'string' &&
-    typeof data.description === 'string' &&
-    typeof data.price === 'number' &&
-    typeof data.weight === 'number' &&
-    Array.isArray(data.karats) &&
-    data.karats.every((k: number) => typeof k === 'number') &&
-    typeof data.isActive === 'number' &&
-    typeof data.hasDiscount === 'number' &&
-    (data.pictures === undefined || Array.isArray(data.pictures)) &&
-    (data.offerPrice === undefined || typeof data.offerPrice === 'number')
-  )
-}
+import type { UserIn } from '../types'
 
 export const validateUser = (data: any): data is UserIn => {
   return typeof data.name === 'string' && typeof data.email === 'string' && typeof data.password === 'string'

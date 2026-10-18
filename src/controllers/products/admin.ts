@@ -1,4 +1,4 @@
-import { validateProduct } from '../../utils/validations'
+import { productInputSchema } from '../../utils/schemas'
 import { createProductData, turso } from '../../utils/config'
 import { LibsqlError } from '@libsql/client'
 import { Request, Response } from 'express'
@@ -6,10 +6,10 @@ import { isProductExist } from '../../utils/validations'
 import { ErrorCodes } from '../../utils/config'
 
 export const addProduct = async (req: Request, res: Response) => {
-  const data = req.body
-  const productData = createProductData(data)
+  const parsed = productInputSchema.safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
+  const productData = createProductData(parsed.data)
 
-  if (!validateProduct(productData)) return res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
   if ((await isProductExist(productData.productId)).exist)
     return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
   try {
@@ -46,18 +46,18 @@ export const updateProduct = async (req: Request, res: Response) => {
     const id = Number(req.params.id)
     const data = req.body
     if (!id || isNaN(id)) return res.status(400).json({ code: ErrorCodes.InvalidId })
-    const productData = createProductData(data)
-
-    if (!validateProduct(productData)) return res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
+    const parsed = productInputSchema.safeParse(data)
+    if (!parsed.success) return res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
+    const productData = createProductData(parsed.data)
     const isExist = await isProductExist(productData.productId)
     if (isExist.exist && isExist.id !== id) return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
 
     const action = await turso.execute({
       sql: 'UPDATE products SET productId = ?, description = ?, category = ?, price = ?, weight = ?, karats = ?, pictures = ?, isActive = ?, hasDiscount = ?, offerPrice = ? WHERE id = ?',
       args: [
-        productData.productId.toString().toLowerCase(),
+        productData.productId,
         productData.description,
-        productData.category.toLowerCase(),
+        productData.category,
         productData.price,
         productData.weight,
         JSON.stringify(productData.karats),
