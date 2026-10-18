@@ -49,6 +49,7 @@ Base path: `/api/v1`. Responses use numeric error codes (see `ErrorCodes` in `sr
 | `POST` | `/auth/logout` | — | Clears the `token` cookie. |
 | `POST` | `/auth/register` | Admin | Creates a user. Optional `role` (`admin` \| `client`, default `client`). |
 | `GET` | `/auth/me` | Cookie | Returns `{ email, role }`. |
+| `PATCH` | `/auth/password` | Cookie | Changes password. Requires `currentPassword` and `newPassword` (min 8 chars). Revokes tokens issued before the change. |
 | `GET` | `/products` | — | Full catalog. Returns `200 []` when empty. |
 | `PATCH` | `/products/sales/:id` | — | Rate limited (30 / min). Atomically increments `sales`. |
 | `POST` | `/products` | Admin | Creates a product. |

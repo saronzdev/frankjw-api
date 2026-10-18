@@ -26,4 +26,4 @@ export type UserOut = {
   createdAt: Date
 }
 
-export type User = UserIn & UserOut
+export type User = UserIn & UserOut & { passwordChangedAt?: number }

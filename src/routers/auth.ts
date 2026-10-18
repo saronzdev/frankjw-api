@@ -1,19 +1,41 @@
 import { Router } from 'express'
-import { validateUser, validateUserLogin, isAdmin, isUserExist } from '../utils/validations'
+import { validateUser, validateUserLogin, isUserExist } from '../utils/validations'
 import type { User, UserIn } from '../types'
 import { ErrorCodes, isProd, saltRounds, secret, turso } from '../utils/config'
+import { changePasswordSchema } from '../utils/schemas'
 import { LibsqlError } from '@libsql/client'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { serialize } from 'cookie'
 import { loginLimiter, registerLimiter } from '../middlewares/rateLimit'
-import { auth as requireAdmin } from '../middlewares/auth'
+import { auth, adminOnly } from '../middlewares/auth'
 
-export const auth = Router()
+export const authRouter = Router()
 
 const DUMMY_HASH = '$2b$10$xuJYvQS015hyp7V.WbZXpOW8nBVyEhBOe3pLIfbtyyPuz00rX4kN.'
+const expiresIn = '7d'
 
-auth.post('/login', loginLimiter, async (req, res): Promise<void> => {
+const buildAuthCookie = (token: string) => {
+  return serialize('token', token, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 60 * 60 * 24 * 7,
+    path: '/'
+  })
+}
+
+const buildClearCookie = () => {
+  return serialize('token', '', {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 0,
+    path: '/'
+  })
+}
+
+authRouter.post('/login', loginLimiter, async (req, res): Promise<void> => {
   const data: UserIn = req.body
   if (!validateUserLogin(data)) {
     res.status(400).json({ code: ErrorCodes.InvalidCredentials })
@@ -32,18 +54,9 @@ auth.post('/login', loginLimiter, async (req, res): Promise<void> => {
       return
     }
 
-    const expiresIn = '7d'
-    const token = jwt.sign({ email: user.email }, secret, { expiresIn })
-    const role = (await isAdmin(user.email)) ? 'admin' : 'client'
-    const cookie = serialize('token', token, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? 'none' : 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/'
-    })
-    res.setHeader('Set-Cookie', cookie)
-    res.status(200).json({ role })
+    const token = jwt.sign({ email: user.email, pwd: user.passwordChangedAt ?? 0 }, secret, { expiresIn })
+    res.setHeader('Set-Cookie', buildAuthCookie(token))
+    res.status(200).json({ role: user.role })
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Error While Login User: ', error.message)
@@ -55,19 +68,12 @@ auth.post('/login', loginLimiter, async (req, res): Promise<void> => {
   }
 })
 
-auth.post('/logout', (_req, res): void => {
-  const cookie = serialize('token', '', {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
-    maxAge: 0,
-    path: '/'
-  })
-  res.setHeader('Set-Cookie', cookie)
+authRouter.post('/logout', (_req, res): void => {
+  res.setHeader('Set-Cookie', buildClearCookie())
   res.sendStatus(200)
 })
 
-auth.post('/register', registerLimiter, requireAdmin, async (req, res): Promise<void> => {
+authRouter.post('/register', registerLimiter, auth, adminOnly, async (req, res): Promise<void> => {
   const data = req.body as UserIn & { role?: string }
   if (!validateUser(data)) {
     res.status(400).json({ message: 'Invalid User', code: ErrorCodes.InvalidCredentials })
@@ -96,32 +102,55 @@ auth.post('/register', registerLimiter, requireAdmin, async (req, res): Promise<
   }
 })
 
-auth.get('/me', async (req, res): Promise<void> => {
-  const token = req.cookies.token
-  if (!token) {
+authRouter.get('/me', auth, (req, res): void => {
+  if (!req.user) {
     res.status(401).json({ code: ErrorCodes.AccessDenied })
     return
   }
+  res.status(200).json({ email: req.user.email, role: req.user.role })
+})
+
+authRouter.patch('/password', auth, async (req, res): Promise<void> => {
+  if (!req.user) {
+    res.status(401).json({ code: ErrorCodes.AccessDenied })
+    return
+  }
+  const parsed = changePasswordSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
+    return
+  }
   try {
-    const user = jwt.verify(token, secret) as User
-    if (!(await isUserExist(user.email))) {
+    const rows = await turso.execute({
+      sql: 'SELECT password FROM users WHERE email = ?',
+      args: [req.user.email]
+    })
+    const row = rows.rows[0] as unknown as { password?: string } | undefined
+    if (!row?.password) {
       res.status(404).json({ code: ErrorCodes.UserNotFound })
       return
     }
-    const role = (await isAdmin(user.email)) ? 'admin' : 'client'
-    res.status(200).json({ email: user.email, role })
+    const isValid = await bcrypt.compare(parsed.data.currentPassword, row.password)
+    if (!isValid) {
+      res.status(400).json({ code: ErrorCodes.PasswordIncorrect })
+      return
+    }
+    const newPassword = await bcrypt.hash(parsed.data.newPassword, saltRounds)
+    const passwordChangedAt = Date.now()
+    await turso.execute({
+      sql: 'UPDATE users SET password = ?, passwordChangedAt = ? WHERE email = ?',
+      args: [newPassword, passwordChangedAt, req.user.email]
+    })
+    const token = jwt.sign({ email: req.user.email, pwd: passwordChangedAt }, secret, { expiresIn })
+    res.setHeader('Set-Cookie', buildAuthCookie(token))
+    res.sendStatus(200)
   } catch (error: any) {
-    if (error instanceof jwt.TokenExpiredError) {
-      console.error('Token Expired Error')
-      res.status(401).json({ code: ErrorCodes.TokenExpired })
+    if (error instanceof LibsqlError) {
+      console.error('Error While Changing Password: ', error.message)
+      res.status(500).json({ code: ErrorCodes.DatabaseError })
       return
     }
-    if (error instanceof jwt.JsonWebTokenError) {
-      console.error('Invalid Token Error')
-      res.status(401).json({ code: ErrorCodes.AccessDenied })
-      return
-    }
-    console.error('Auth Error: ', error.toString())
-    res.status(500).json({ code: ErrorCodes.AuthError })
+    console.error('Unhandler Error While Changing Password: ', error.toString())
+    res.sendStatus(500)
   }
 })

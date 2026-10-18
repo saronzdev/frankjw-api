@@ -41,3 +41,8 @@ export const productInputSchema = z
   )
 
 export type ProductInput = z.infer<typeof productInputSchema>
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8)
+})
