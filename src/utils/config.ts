@@ -62,14 +62,26 @@ export const isProd = process.env.NODE_ENV === 'production'
 const tursoOptions: Config = isProd ? { url: tursoUrl, authToken: tursoToken } : { url: 'file:./local.db' }
 export const turso = createClient(tursoOptions)
 
-const com = /^https?:\/\/([a-zA-Z0-9-]+\.)*frankjoyeriacuba\.com$/
-const vercel = /^https:\/\/frankjw[\w-]*\.vercel\.app$/
+const PROD_ORIGINS = [
+  'https://frankjoyeriacuba.com',
+  'https://www.frankjoyeriacuba.com',
+  'https://frankjw.vercel.app',
+  'https://www.frankjw.vercel.app'
+]
+
+const extraOrigins = (process.env.CORS_EXTRA_ORIGINS ?? '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+
+const allowedOrigins = new Set([...PROD_ORIGINS, ...extraOrigins])
+
 const local = /^http:\/\/localhost(:\d+)?$/
 
 export const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
     if (isProd) {
-      if (!origin || com.test(origin) || vercel.test(origin)) {
+      if (!origin || allowedOrigins.has(origin)) {
         callback(null, true)
       } else {
         callback(new Error('Origin not allowed'))
