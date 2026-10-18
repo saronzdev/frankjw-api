@@ -17,6 +17,8 @@
   "license": "ISC",
   "dependencies": {
     "@libsql/client": "^0.15.9",
+    "@upstash/ratelimit": "^2.2.0",
+    "@upstash/redis": "^1.39.0",
     "bcrypt": "^6.0.0",
     "cookie": "^1.0.2",
     "cookie-parser": "^1.4.7",

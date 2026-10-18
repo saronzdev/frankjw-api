@@ -11,7 +11,7 @@ REST API for [frankjoyeriacuba.com](https://frankjoyeriacuba.com), an e-commerce
 | Database | [Turso](https://turso.tech/) / libSQL (`@libsql/client`) |
 | Validation | [zod](https://zod.dev/) |
 | Auth | [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) (JWT in an httpOnly cookie) + [bcrypt](https://github.com/kelektiv/node.bcrypt.js) |
-| Rate limiting | [express-rate-limit](https://github.com/express-rate-limit/express-rate-limit) |
+| Rate limiting | [@upstash/ratelimit](https://github.com/upstash/ratelimit) via Upstash Redis with an in-memory fallback when Upstash is not configured |
 | Deploy | [Vercel](https://vercel.com/) (serverless) |
 
 ## Getting started
@@ -35,6 +35,8 @@ In development the database is a local SQLite file (`local.db`); in production i
 | `TURSO_URL` | Prod | Turso database URL. Validated at startup in production. |
 | `TURSO_TOKEN` | Prod | Turso auth token. Validated at startup in production. |
 | `CORS_EXTRA_ORIGINS` | No | Comma-separated extra allowed origins (e.g. Vercel previews). |
+| `UPSTASH_REDIS_REST_URL` | No | Upstash REST URL. Enables distributed (per-instance-independent) rate limiting. |
+| `UPSTASH_REDIS_REST_TOKEN` | No | Upstash REST token. Both must be set for distributed limiting; falls back to in-memory otherwise. |
 
 ## Endpoints
 
