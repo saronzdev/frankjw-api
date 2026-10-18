@@ -1,25 +1,24 @@
 import { Router } from 'express'
-import { validateUser, validateUserLogin } from '../utils/validations'
+import { validateUser, validateUserLogin, isAdmin, isUserExist } from '../utils/validations'
 import type { User, UserIn } from '../types'
-import { isProd, turso } from '../utils/config'
+import { ErrorCodes, isProd, saltRounds, secret, turso } from '../utils/config'
 import { LibsqlError } from '@libsql/client'
 import bcrypt from 'bcrypt'
-import { saltRounds, secret } from '../utils/config'
 import jwt from 'jsonwebtoken'
-import { isAdmin, isUserExist } from '../utils/validations'
-import { ErrorCodes } from '../utils/config'
 import { serialize } from 'cookie'
 import { loginLimiter, registerLimiter } from '../middlewares/rateLimit'
 import { auth as requireAdmin } from '../middlewares/auth'
-import { RequestHandler } from 'express'
 
 export const auth = Router()
 
 const DUMMY_HASH = '$2b$10$xuJYvQS015hyp7V.WbZXpOW8nBVyEhBOe3pLIfbtyyPuz00rX4kN.'
 
-auth.post('/login', loginLimiter, async (req, res): Promise<any> => {
+auth.post('/login', loginLimiter, async (req, res): Promise<void> => {
   const data: UserIn = req.body
-  if (!validateUserLogin(data)) return res.status(400).json({ code: ErrorCodes.InvalidCredentials })
+  if (!validateUserLogin(data)) {
+    res.status(400).json({ code: ErrorCodes.InvalidCredentials })
+    return
+  }
   try {
     const result = await turso.execute({
       sql: 'SELECT * FROM users WHERE email = ?',
@@ -29,7 +28,8 @@ auth.post('/login', loginLimiter, async (req, res): Promise<any> => {
     const passwordHash = user?.password ?? DUMMY_HASH
     const isValid = await bcrypt.compare(data.password, passwordHash)
     if (!user || !isValid) {
-      return res.status(400).json({ code: ErrorCodes.InvalidCredentials })
+      res.status(400).json({ code: ErrorCodes.InvalidCredentials })
+      return
     }
 
     const expiresIn = '7d'
@@ -47,10 +47,11 @@ auth.post('/login', loginLimiter, async (req, res): Promise<any> => {
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Error While Login User: ', error.message)
-      return res.status(500).json({ code: ErrorCodes.DatabaseError })
+      res.status(500).json({ code: ErrorCodes.DatabaseError })
+      return
     }
     console.error('Unhandler Error While Login User: ', error.toString())
-    return res.sendStatus(500)
+    res.sendStatus(500)
   }
 })
 
@@ -66,10 +67,16 @@ auth.post('/logout', (_req, res): void => {
   res.sendStatus(200)
 })
 
-auth.post('/register', registerLimiter, requireAdmin as RequestHandler, async (req, res): Promise<any> => {
+auth.post('/register', registerLimiter, requireAdmin, async (req, res): Promise<void> => {
   const data = req.body as UserIn & { role?: string }
-  if (!validateUser(data)) return res.status(400).json({ message: 'Invalid User', code: ErrorCodes.InvalidCredentials })
-  if (await isUserExist(data.email)) return res.status(409).json({ code: ErrorCodes.AlreadyExist })
+  if (!validateUser(data)) {
+    res.status(400).json({ message: 'Invalid User', code: ErrorCodes.InvalidCredentials })
+    return
+  }
+  if (await isUserExist(data.email)) {
+    res.status(409).json({ code: ErrorCodes.AlreadyExist })
+    return
+  }
   const role = data.role === 'admin' ? 'admin' : 'client'
   try {
     const password = await bcrypt.hash(data.password, saltRounds)
@@ -81,33 +88,40 @@ auth.post('/register', registerLimiter, requireAdmin as RequestHandler, async (r
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Error While Register User: ', error.message)
-      return res.status(500).json({ code: ErrorCodes.DatabaseError })
+      res.status(500).json({ code: ErrorCodes.DatabaseError })
+      return
     }
     console.error('Unhandler Error While Register User: ', error.toString())
-    return res.sendStatus(500)
+    res.sendStatus(500)
   }
 })
 
-auth.get('/me', async (req, res): Promise<any> => {
+auth.get('/me', async (req, res): Promise<void> => {
   const token = req.cookies.token
-  if (!token) return res.status(401).json({ code: ErrorCodes.AccessDenied })
+  if (!token) {
+    res.status(401).json({ code: ErrorCodes.AccessDenied })
+    return
+  }
   try {
     const user = jwt.verify(token, secret) as User
     if (!(await isUserExist(user.email))) {
-      return res.status(404).json({ code: ErrorCodes.UserNotFound })
+      res.status(404).json({ code: ErrorCodes.UserNotFound })
+      return
     }
     const role = (await isAdmin(user.email)) ? 'admin' : 'client'
     res.status(200).json({ email: user.email, role })
   } catch (error: any) {
     if (error instanceof jwt.TokenExpiredError) {
       console.error('Token Expired Error')
-      return res.status(401).json({ code: ErrorCodes.TokenExpired })
+      res.status(401).json({ code: ErrorCodes.TokenExpired })
+      return
     }
     if (error instanceof jwt.JsonWebTokenError) {
       console.error('Invalid Token Error')
-      return res.status(401).json({ code: ErrorCodes.AccessDenied })
+      res.status(401).json({ code: ErrorCodes.AccessDenied })
+      return
     }
     console.error('Auth Error: ', error.toString())
-    return res.status(500).json({ code: ErrorCodes.AuthError })
+    res.status(500).json({ code: ErrorCodes.AuthError })
   }
 })

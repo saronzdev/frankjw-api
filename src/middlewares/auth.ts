@@ -1,37 +1,41 @@
-import { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
-import { secret } from '../utils/config'
+import { ErrorCodes, secret } from '../utils/config'
 import { isAdmin } from '../utils/validations'
-import { ErrorCodes } from '../utils/config'
 
-type MyRequest = Request & { user: any }
 type User = {
   email: string
 }
 
-export const auth = async (req: MyRequest, res: Response, next: any) => {
+type MyRequest = Request & { user?: User }
+
+export const auth = async (req: MyRequest, res: Response, next: NextFunction): Promise<void> => {
   const token = req.cookies.token
   if (!token) {
-    return res.status(401).json({ code: ErrorCodes.AccessDenied })
+    res.status(401).json({ code: ErrorCodes.AccessDenied })
+    return
   }
   try {
     const user = jwt.verify(token, secret) as User
     req.user = user
     if (!(await isAdmin(user.email))) {
       console.error('User Is Not Admin')
-      return res.status(401).json({ code: ErrorCodes.AccessDenied })
+      res.status(401).json({ code: ErrorCodes.AccessDenied })
+      return
     }
     next()
   } catch (error: any) {
     if (error instanceof jwt.TokenExpiredError) {
       console.error('Token Expired Error')
-      return res.status(401).json({ code: ErrorCodes.TokenExpired })
+      res.status(401).json({ code: ErrorCodes.TokenExpired })
+      return
     }
     if (error instanceof jwt.JsonWebTokenError) {
       console.error('Invalid Token Error')
-      return res.status(401).json({ code: ErrorCodes.AccessDenied })
+      res.status(401).json({ code: ErrorCodes.AccessDenied })
+      return
     }
     console.error('Auth Error: ', error.toString())
-    return res.status(500).json({ code: ErrorCodes.AuthError })
+    res.status(500).json({ code: ErrorCodes.AuthError })
   }
 }

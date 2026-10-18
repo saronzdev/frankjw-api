@@ -1,17 +1,21 @@
-import { productInputSchema } from '../../utils/schemas'
-import { createProductData, turso } from '../../utils/config'
-import { LibsqlError } from '@libsql/client'
 import { Request, Response } from 'express'
+import { LibsqlError } from '@libsql/client'
+import { productInputSchema } from '../../utils/schemas'
+import { ErrorCodes, createProductData, turso } from '../../utils/config'
 import { isProductExist } from '../../utils/validations'
-import { ErrorCodes } from '../../utils/config'
 
-export const addProduct = async (req: Request, res: Response) => {
+export const addProduct = async (req: Request, res: Response): Promise<void> => {
   const parsed = productInputSchema.safeParse(req.body)
-  if (!parsed.success) return res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
+  if (!parsed.success) {
+    res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
+    return
+  }
   const productData = createProductData(parsed.data)
 
-  if ((await isProductExist(productData.productId)).exist)
-    return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
+  if ((await isProductExist(productData.productId)).exist) {
+    res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
+    return
+  }
   try {
     await turso.execute({
       sql: 'INSERT INTO products (productId, description, category, price, weight, karats, pictures, isActive, hasDiscount, offerPrice) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -33,27 +37,35 @@ export const addProduct = async (req: Request, res: Response) => {
     if (error instanceof LibsqlError) {
       console.error('Error While Creating Product: ', error.message)
       if (error.message.includes('UNIQUE constraint failed')) {
-        return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
+        res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
+        return
       }
-      return res.status(500).json({
-        code: ErrorCodes.DatabaseError
-      })
+      res.status(500).json({ code: ErrorCodes.DatabaseError })
+      return
     }
     console.error('Unhandler Error While Creating Product: ', error.toString())
-    return res.sendStatus(500)
+    res.sendStatus(500)
   }
 }
 
-export const updateProduct = async (req: Request, res: Response) => {
+export const updateProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = Number(req.params.id)
-    const data = req.body
-    if (!id || isNaN(id)) return res.status(400).json({ code: ErrorCodes.InvalidId })
-    const parsed = productInputSchema.safeParse(data)
-    if (!parsed.success) return res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
+    if (!id || isNaN(id)) {
+      res.status(400).json({ code: ErrorCodes.InvalidId })
+      return
+    }
+    const parsed = productInputSchema.safeParse(req.body)
+    if (!parsed.success) {
+      res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
+      return
+    }
     const productData = createProductData(parsed.data)
     const isExist = await isProductExist(productData.productId)
-    if (isExist.exist && isExist.id !== id) return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
+    if (isExist.exist && isExist.id !== id) {
+      res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
+      return
+    }
 
     const action = await turso.execute({
       sql: 'UPDATE products SET productId = ?, description = ?, category = ?, price = ?, weight = ?, karats = ?, pictures = ?, isActive = ?, hasDiscount = ?, offerPrice = ? WHERE id = ?',
@@ -73,41 +85,49 @@ export const updateProduct = async (req: Request, res: Response) => {
     })
 
     if (action.rowsAffected === 0) {
-      return res.status(404).json({ code: ErrorCodes.ProductNotFound })
+      res.status(404).json({ code: ErrorCodes.ProductNotFound })
+      return
     }
     res.sendStatus(200)
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Error While Updating Product: ', error.message)
       if (error.message.includes('UNIQUE constraint failed')) {
-        return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
+        res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
+        return
       }
-      return res.status(500).json({ code: ErrorCodes.DatabaseError })
+      res.status(500).json({ code: ErrorCodes.DatabaseError })
+      return
     }
     console.error('Unhandler Error While Updating Product: ', error.toString())
-    return res.sendStatus(500)
+    res.sendStatus(500)
   }
 }
 
-export const deleteProduct = async (req: Request, res: Response) => {
+export const deleteProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = Number(req.params.id)
-    if (!id || isNaN(id)) return res.status(400).json({ code: ErrorCodes.InvalidId })
+    if (!id || isNaN(id)) {
+      res.status(400).json({ code: ErrorCodes.InvalidId })
+      return
+    }
     const action = await turso.execute({
       sql: 'DELETE FROM products WHERE id = ?',
       args: [id]
     })
 
     if (action.rowsAffected === 0) {
-      return res.status(404).json({ code: ErrorCodes.ProductNotFound })
+      res.status(404).json({ code: ErrorCodes.ProductNotFound })
+      return
     }
     res.sendStatus(200)
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Unhandler Error While Delete Product: ', error.message)
-      return res.status(500).json({ code: ErrorCodes.DatabaseError })
+      res.status(500).json({ code: ErrorCodes.DatabaseError })
+      return
     }
     console.error('Unhandler Error While Delete Product: ', error.toString())
-    return res.sendStatus(500)
+    res.sendStatus(500)
   }
 }
