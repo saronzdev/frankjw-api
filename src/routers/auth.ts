@@ -13,6 +13,8 @@ import { loginLimiter, registerLimiter } from '../middlewares/rateLimit'
 
 export const auth = Router()
 
+const DUMMY_HASH = '$2b$10$xuJYvQS015hyp7V.WbZXpOW8nBVyEhBOe3pLIfbtyyPuz00rX4kN.'
+
 auth.post('/login', loginLimiter, async (req, res): Promise<any> => {
   const data: UserIn = req.body
   if (!validateUserLogin(data)) return res.status(400).json({ code: ErrorCodes.InvalidCredentials })
@@ -21,12 +23,12 @@ auth.post('/login', loginLimiter, async (req, res): Promise<any> => {
       sql: 'SELECT * FROM users WHERE email = ?',
       args: [data.email]
     })
-    const user = result.rows[0] as unknown as User
-    if (!user) {
-      return res.status(404).json({ code: ErrorCodes.UserNotFound })
+    const user = result.rows[0] as unknown as User | undefined
+    const passwordHash = user?.password ?? DUMMY_HASH
+    const isValid = await bcrypt.compare(data.password, passwordHash)
+    if (!user || !isValid) {
+      return res.status(400).json({ code: ErrorCodes.InvalidCredentials })
     }
-    const isValid = await bcrypt.compare(data.password, user.password)
-    if (!isValid) return res.status(400).json({ code: ErrorCodes.PasswordIncorrect })
 
     const expiresIn = '7d'
     const token = jwt.sign({ email: user.email }, secret, { expiresIn })
