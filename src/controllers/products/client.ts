@@ -33,15 +33,21 @@ export const getAll = async (req: Request, res: Response) => {
 }
 
 export const increaseSales = async (req: Request, res: Response) => {
-  const { id } = req.params
+  const id = Number(req.params.id)
+  if (!id || isNaN(id)) return res.status(400).json({ code: ErrorCodes.InvalidId })
   try {
-    const product = await turso.execute({ sql: 'SELECT sales FROM products WHERE id = ?', args: [id] })
-    if (product.rows.length === 0) return res.sendStatus(404)
-    const sales = Number(product.rows[0].sales) + 1
-    const result = await turso.execute({ sql: 'UPDATE products SET sales = ? WHERE id = ?', args: [sales, id] })
-    if (result.rowsAffected === 0) return res.sendStatus(404)
+    const result = await turso.execute({
+      sql: 'UPDATE products SET sales = sales + 1 WHERE id = ?',
+      args: [id]
+    })
+    if (result.rowsAffected === 0) return res.status(404).json({ code: ErrorCodes.ProductNotFound })
     res.end()
-  } catch {
+  } catch (error: any) {
+    if (error instanceof LibsqlError) {
+      console.error('Error While Increasing Sales: ', error.message)
+      return res.status(500).json({ code: ErrorCodes.DatabaseError })
+    }
+    console.error('Unhandler Error While Increasing Sales: ', error.toString())
     return res.sendStatus(500)
   }
 }
