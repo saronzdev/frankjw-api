@@ -10,6 +10,8 @@ import { isAdmin, isUserExist } from '../utils/validations'
 import { ErrorCodes } from '../utils/config'
 import { serialize } from 'cookie'
 import { loginLimiter, registerLimiter } from '../middlewares/rateLimit'
+import { auth as requireAdmin } from '../middlewares/auth'
+import { RequestHandler } from 'express'
 
 export const auth = Router()
 
@@ -64,15 +66,16 @@ auth.post('/logout', (_req, res): void => {
   res.sendStatus(200)
 })
 
-auth.post('/register', registerLimiter, async (req, res): Promise<any> => {
-  const data: UserIn = req.body
+auth.post('/register', registerLimiter, requireAdmin as RequestHandler, async (req, res): Promise<any> => {
+  const data = req.body as UserIn & { role?: string }
   if (!validateUser(data)) return res.status(400).json({ message: 'Invalid User', code: ErrorCodes.InvalidCredentials })
   if (await isUserExist(data.email)) return res.status(409).json({ code: ErrorCodes.AlreadyExist })
+  const role = data.role === 'admin' ? 'admin' : 'client'
   try {
     const password = await bcrypt.hash(data.password, saltRounds)
     await turso.execute({
       sql: 'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-      args: [data.name, data.email, password, 'client']
+      args: [data.name, data.email, password, role]
     })
     res.sendStatus(201)
   } catch (error: any) {
