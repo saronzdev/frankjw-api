@@ -23,7 +23,7 @@ const initProductsDatabase = async () => {
     `)
   } catch (error) {
     console.error('Error creating products table:', error)
-    throw new Error('Failed to initialize products database')
+    throw new Error('Failed to initialize products database', { cause: error })
   }
 }
 
@@ -41,7 +41,7 @@ const initUsersDatabase = async () => {
     `)
   } catch (error) {
     console.error('Error creating users table:', error)
-    throw new Error('Failed to initialize users database')
+    throw new Error('Failed to initialize users database', { cause: error })
   }
 }
 
@@ -60,7 +60,7 @@ const initProductsUniqueIndex = async () => {
     await turso.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_products_productId ON products (productId)')
   } catch (error) {
     console.error('Error creating products unique index:', error)
-    throw new Error('Failed to initialize products unique index')
+    throw new Error('Failed to initialize products unique index', { cause: error })
   }
 }
 

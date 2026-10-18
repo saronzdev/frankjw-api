@@ -43,7 +43,7 @@ export const isProductExist = async (productId: string) => {
     const exist = product.rows.length > 0
     if (!exist) return { exist: false, id: null }
     return { exist: true, id: product.rows[0].id }
-  } catch (error) {
+  } catch {
     return { exist: false, id: null }
   }
 }

@@ -36,7 +36,7 @@ export const productInputSchema = z
     offerPrice: nonNegativeNumber.optional()
   })
   .refine(
-    (data) => !Boolean(data.hasDiscount) || (data.offerPrice !== undefined && data.offerPrice < data.price),
+    (data) => !data.hasDiscount || (data.offerPrice !== undefined && data.offerPrice < data.price),
     { message: 'offerPrice must be lower than price when hasDiscount is enabled' }
   )
 
