@@ -49,6 +49,18 @@ auth.post('/login', async (req, res): Promise<any> => {
   }
 })
 
+auth.post('/logout', (_req, res): void => {
+  const cookie = serialize('token', '', {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 0,
+    path: '/'
+  })
+  res.setHeader('Set-Cookie', cookie)
+  res.sendStatus(200)
+})
+
 auth.post('/register', async (req, res): Promise<any> => {
   const data: UserIn = req.body
   if (!validateUser(data)) return res.status(400).json({ message: 'Invalid User', code: ErrorCodes.InvalidCredentials })
