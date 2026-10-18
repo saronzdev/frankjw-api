@@ -32,6 +32,9 @@ export const addProduct = async (req: Request, res: Response) => {
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Error While Creating Product: ', error.message)
+      if (error.message.includes('UNIQUE constraint failed')) {
+        return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
+      }
       return res.status(500).json({
         code: ErrorCodes.DatabaseError
       })
@@ -76,6 +79,9 @@ export const updateProduct = async (req: Request, res: Response) => {
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Error While Updating Product: ', error.message)
+      if (error.message.includes('UNIQUE constraint failed')) {
+        return res.status(400).json({ code: ErrorCodes.ProductAlreadyExist })
+      }
       return res.status(500).json({ code: ErrorCodes.DatabaseError })
     }
     console.error('Unhandler Error While Updating Product: ', error.toString())

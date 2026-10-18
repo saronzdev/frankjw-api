@@ -45,6 +45,25 @@ const initUsersDatabase = async () => {
   }
 }
 
+const initProductsUniqueIndex = async () => {
+  try {
+    const duplicates = await turso.execute(`
+      SELECT productId FROM products
+      GROUP BY productId
+      HAVING COUNT(*) > 1
+      LIMIT 1
+    `)
+    if (duplicates.rows.length > 0) {
+      console.warn('Skipping unique index on products.productId: duplicate productIds found')
+      return
+    }
+    await turso.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_products_productId ON products (productId)')
+  } catch (error) {
+    console.error('Error creating products unique index:', error)
+    throw new Error('Failed to initialize products unique index')
+  }
+}
+
 export const initdb = async () => {
   if (dbInitialized) {
     console.log('Database already initialized')
@@ -55,6 +74,7 @@ export const initdb = async () => {
     console.log('Initializing database...')
     await initProductsDatabase()
     await initUsersDatabase()
+    await initProductsUniqueIndex()
     console.log('Database tables created/verified')
     dbInitialized = true
   } catch (error) {
