@@ -24,10 +24,12 @@ export const auth = async (req: MyRequest, res: Response, next: any) => {
     next()
   } catch (error: any) {
     if (error instanceof jwt.TokenExpiredError) {
-      if (error.name === 'TokenExpiredError') {
-        console.error('Token Expired Error')
-        return res.status(401).json({ code: ErrorCodes.TokenExpired })
-      }
+      console.error('Token Expired Error')
+      return res.status(401).json({ code: ErrorCodes.TokenExpired })
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      console.error('Invalid Token Error')
+      return res.status(401).json({ code: ErrorCodes.AccessDenied })
     }
     console.error('Auth Error: ', error.toString())
     return res.status(500).json({ code: ErrorCodes.AuthError })

@@ -115,6 +115,10 @@ auth.get('/me', async (req, res): Promise<any> => {
       console.error('Token Expired Error')
       return res.status(401).json({ code: ErrorCodes.TokenExpired })
     }
+    if (error instanceof jwt.JsonWebTokenError) {
+      console.error('Invalid Token Error')
+      return res.status(401).json({ code: ErrorCodes.AccessDenied })
+    }
     console.error('Auth Error: ', error.toString())
     return res.status(500).json({ code: ErrorCodes.AuthError })
   }
