@@ -5,7 +5,7 @@ import { initdb } from './utils/database'
 import { products } from './routers/products'
 import { auth } from './routers/auth'
 import cookieParser from 'cookie-parser'
-import { corsOptions, ErrorCodes } from './utils/config'
+import { corsOptions, ErrorCodes, isProd } from './utils/config'
 import { assertEnv } from './utils/env'
 
 const PORT = process.env.PORT ?? 3000
@@ -15,7 +15,7 @@ export const app = express()
 
 app.use(cors(corsOptions))
 app.use(cookieParser())
-app.use(morgan('dev'))
+app.use(morgan(isProd ? 'tiny' : 'dev'))
 app.use(express.json())
 
 app.use(async (req, res, next) => {
