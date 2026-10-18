@@ -9,10 +9,11 @@ import jwt from 'jsonwebtoken'
 import { isAdmin, isUserExist } from '../utils/validations'
 import { ErrorCodes } from '../utils/config'
 import { serialize } from 'cookie'
+import { loginLimiter, registerLimiter } from '../middlewares/rateLimit'
 
 export const auth = Router()
 
-auth.post('/login', async (req, res): Promise<any> => {
+auth.post('/login', loginLimiter, async (req, res): Promise<any> => {
   const data: UserIn = req.body
   if (!validateUserLogin(data)) return res.status(400).json({ code: ErrorCodes.InvalidCredentials })
   try {
@@ -61,7 +62,7 @@ auth.post('/logout', (_req, res): void => {
   res.sendStatus(200)
 })
 
-auth.post('/register', async (req, res): Promise<any> => {
+auth.post('/register', registerLimiter, async (req, res): Promise<any> => {
   const data: UserIn = req.body
   if (!validateUser(data)) return res.status(400).json({ message: 'Invalid User', code: ErrorCodes.InvalidCredentials })
   if (await isUserExist(data.email)) return res.status(409).json({ code: ErrorCodes.AlreadyExist })

@@ -11,6 +11,7 @@ export const ErrorCodes = {
   UserNotFound: 1004,
   PasswordIncorrect: 1005,
   AuthError: 1006,
+  TooManyRequests: 1007,
 
   //Products Errors
   ProductNotFound: 1101,
