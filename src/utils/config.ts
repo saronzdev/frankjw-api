@@ -1,6 +1,6 @@
 import { Config } from '@libsql/client'
 import { createClient } from '@libsql/client'
-import type { ProductIn, ProductInRefactor } from '../types'
+import type { ProductInput, ProductRow } from '../types'
 import { CorsOptions } from 'cors'
 
 export const ErrorCodes = {
@@ -11,6 +11,7 @@ export const ErrorCodes = {
   UserNotFound: 1004,
   PasswordIncorrect: 1005,
   AuthError: 1006,
+  TooManyRequests: 1007,
 
   //Products Errors
   ProductNotFound: 1101,
@@ -34,42 +35,46 @@ export const secret = process.env.JWT_SECRET as string
 const tursoUrl = process.env.TURSO_URL as string
 const tursoToken = process.env.TURSO_TOKEN as string
 
-export const createProductData = (data: ProductIn) => {
-  let karatsArray: number[]
-
-  try {
-    karatsArray = typeof data.karats === 'string' ? JSON.parse(data.karats) : data.karats
-  } catch {
-    karatsArray = []
-  }
-
-  const productData: ProductInRefactor = {
-    productId: data.productId.toString().toLowerCase(),
+export const createProductData = (data: ProductInput): ProductRow => {
+  const productData: ProductRow = {
+    productId: data.productId.toLowerCase(),
     description: data.description,
     category: data.category.toLowerCase(),
-    price: Number(data.price),
-    weight: Number(data.weight),
-    karats: karatsArray,
+    price: data.price,
+    weight: data.weight,
+    karats: data.karats,
     isActive: data.isActive ? 1 : 0,
     pictures: data.pictures,
     hasDiscount: data.hasDiscount ? 1 : 0,
-    offerPrice: data.offerPrice ? Number(data.offerPrice) : undefined
+    offerPrice: data.hasDiscount ? data.offerPrice : undefined
   }
   return productData
 }
 
 export const isProd = process.env.NODE_ENV === 'production'
-const tursoOptions: Config = isProd ? { url: tursoUrl, authToken: tursoToken } : { url: 'file:./local.db' }
+const tursoOptions: Config = isProd ? { url: tursoUrl, authToken: tursoToken } : { url: process.env.TURSO_URL ?? 'file:./local.db' }
 export const turso = createClient(tursoOptions)
 
-const com = /^https?:\/\/([a-zA-Z0-9-]+\.)*frankjoyeriacuba\.com$/
-const vercel = /^https:\/\/frankjw[\w-]*\.vercel\.app$/
+const PROD_ORIGINS = [
+  'https://frankjoyeriacuba.com',
+  'https://www.frankjoyeriacuba.com',
+  'https://frankjw.vercel.app',
+  'https://www.frankjw.vercel.app'
+]
+
+const extraOrigins = (process.env.CORS_EXTRA_ORIGINS ?? '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+
+const allowedOrigins = new Set([...PROD_ORIGINS, ...extraOrigins])
+
 const local = /^http:\/\/localhost(:\d+)?$/
 
 export const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
     if (isProd) {
-      if (!origin || com.test(origin) || vercel.test(origin)) {
+      if (!origin || allowedOrigins.has(origin)) {
         callback(null, true)
       } else {
         callback(new Error('Origin not allowed'))

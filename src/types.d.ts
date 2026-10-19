@@ -1,29 +1,18 @@
-export type ProductIn = {
-  productId: string
-  description: string
-  category: string
-  price: number
-  weight: number
-  karats: number[]
-  isActive: boolean
-  pictures?: string[]
-  hasDiscount: boolean
-  offerPrice?: number
-}
+import type { ProductInput } from './utils/schemas'
 
-export type ProductInRefactor = Omit<ProductIn, 'karats', 'isActive', 'hasDiscount'> & {
-  karats: number[]
+export type { ProductInput }
+
+export type ProductRow = Omit<ProductInput, 'isActive' | 'hasDiscount'> & {
   isActive: number
   hasDiscount: number
 }
 
 export type ProductOut = {
   id: number
-  pictures: string
-  createdAt: Date
+  createdAt: number
 }
 
-export type ProductType = ProductIn & ProductOut
+export type ProductType = ProductInput & ProductOut
 
 export type UserIn = {
   name: string
@@ -37,4 +26,4 @@ export type UserOut = {
   createdAt: Date
 }
 
-export type User = UserIn & UserOut
+export type User = UserIn & UserOut & { passwordChangedAt?: number }

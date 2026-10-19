@@ -27,3 +27,14 @@ export const migrateCategoryNames = async () => {
   })
   console.log(`categories renamed: ${result.rowsAffected}`)
 }
+
+export const migrateUserPasswordChangedAt = async () => {
+  const columns = await turso.execute('PRAGMA table_info(users)')
+  const exists = columns.rows.some((row) => row.name === 'passwordChangedAt')
+  if (exists) {
+    console.log('users.passwordChangedAt already present')
+    return
+  }
+  await turso.execute('ALTER TABLE users ADD COLUMN passwordChangedAt INTEGER DEFAULT 0')
+  console.log('users.passwordChangedAt column added')
+}

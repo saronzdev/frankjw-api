@@ -1,41 +1,60 @@
-import { turso } from '../../utils/config'
-import { LibsqlError } from '@libsql/client'
 import { Request, Response } from 'express'
-import { ErrorCodes } from '../../utils/config'
-import { ProductType } from '../../types'
+import { LibsqlError } from '@libsql/client'
+import { ErrorCodes, turso } from '../../utils/config'
+import type { ProductType } from '../../types'
 
-export const getAll = async (req: Request, res: Response) => {
+const parseJson = <T>(value: unknown, fallback: T): T => {
+  if (typeof value !== 'string') return fallback
+  try {
+    return JSON.parse(value) as T
+  } catch {
+    return fallback
+  }
+}
+
+export const getAll = async (_req: Request, res: Response): Promise<void> => {
   try {
     const products = await turso.execute(`SELECT * FROM products`)
-    if (products.rows.length === 0) {
-      return res.status(404).json({ code: ErrorCodes.ProductNotFound })
-    }
     const data = products.rows.map((p) => ({
       ...p,
-      pictures: JSON.parse(p.pictures as string),
-      karats: JSON.parse(p.karats as string)
+      pictures: parseJson<string[]>(p.pictures, []),
+      karats: parseJson<number[]>(p.karats, [])
     })) as unknown as ProductType[]
     res.json(data)
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Error While Getting Products: ', error.message)
-      return res.status(500).json({ code: ErrorCodes.DatabaseError })
+      res.status(500).json({ code: ErrorCodes.DatabaseError })
+      return
     }
     console.error('Unhandler Error While Getting Products: ', error.toString())
-    return res.sendStatus(500)
+    res.sendStatus(500)
   }
 }
 
-export const increaseSales = async (req: Request, res: Response) => {
-  const { id } = req.params
+export const increaseSales = async (req: Request, res: Response): Promise<void> => {
+  const id = Number(req.params.id)
+  if (!id || isNaN(id)) {
+    res.status(400).json({ code: ErrorCodes.InvalidId })
+    return
+  }
   try {
-    const product = await turso.execute({ sql: 'SELECT sales FROM products WHERE id = ?', args: [id] })
-    if (product.rows.length === 0) return res.sendStatus(404)
-    const sales = Number(product.rows[0].sales) + 1
-    const result = await turso.execute({ sql: 'UPDATE products SET sales = ? WHERE id = ?', args: [sales, id] })
-    if (result.rowsAffected === 0) return res.sendStatus(404)
+    const result = await turso.execute({
+      sql: 'UPDATE products SET sales = sales + 1 WHERE id = ?',
+      args: [id]
+    })
+    if (result.rowsAffected === 0) {
+      res.status(404).json({ code: ErrorCodes.ProductNotFound })
+      return
+    }
     res.end()
-  } catch {
-    return res.sendStatus(500)
+  } catch (error: any) {
+    if (error instanceof LibsqlError) {
+      console.error('Error While Increasing Sales: ', error.message)
+      res.status(500).json({ code: ErrorCodes.DatabaseError })
+      return
+    }
+    console.error('Unhandler Error While Increasing Sales: ', error.toString())
+    res.sendStatus(500)
   }
 }

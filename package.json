@@ -3,27 +3,35 @@
   "version": "1.0.0",
   "description": "API from Frank Jewelry",
   "main": "dist/index.js",
+  "packageManager": "pnpm@12.14.0",
   "scripts": {
     "dev": "tsx --env-file .env --watch src/index.ts",
     "build": "pnpm tsc",
     "start": "node --env-file .env dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "vercel-build": "echo passed"
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "vercel-build": "tsc --noEmit"
   },
   "keywords": [],
   "author": "saronzdev",
   "license": "ISC",
   "dependencies": {
     "@libsql/client": "^0.15.9",
+    "@upstash/ratelimit": "^2.2.0",
+    "@upstash/redis": "^1.39.0",
     "bcrypt": "^6.0.0",
     "cookie": "^1.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.7.1",
     "jsonwebtoken": "^9.0.2",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.9",
     "@types/cors": "^2.8.19",
@@ -31,7 +39,12 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/node": "^24.0.4",
+    "@types/supertest": "^7.2.1",
+    "eslint": "^10.13.0",
+    "supertest": "^7.3.1",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.71.2",
+    "vitest": "^5.0.5"
   }
 }

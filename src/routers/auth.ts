@@ -1,91 +1,156 @@
 import { Router } from 'express'
-import { validateUser, validateUserLogin } from '../utils/validations'
+import { validateUser, validateUserLogin, isUserExist } from '../utils/validations'
 import type { User, UserIn } from '../types'
-import { isProd, turso } from '../utils/config'
+import { ErrorCodes, isProd, saltRounds, secret, turso } from '../utils/config'
+import { changePasswordSchema } from '../utils/schemas'
 import { LibsqlError } from '@libsql/client'
 import bcrypt from 'bcrypt'
-import { saltRounds, secret } from '../utils/config'
 import jwt from 'jsonwebtoken'
-import { isAdmin, isUserExist } from '../utils/validations'
-import { ErrorCodes } from '../utils/config'
 import { serialize } from 'cookie'
+import { loginLimiter, registerLimiter } from '../middlewares/rateLimit'
+import { auth, adminOnly } from '../middlewares/auth'
 
-export const auth = Router()
+export const authRouter = Router()
 
-auth.post('/login', async (req, res): Promise<any> => {
+const DUMMY_HASH = '$2b$10$xuJYvQS015hyp7V.WbZXpOW8nBVyEhBOe3pLIfbtyyPuz00rX4kN.'
+const expiresIn = '7d'
+
+const buildAuthCookie = (token: string) => {
+  return serialize('token', token, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 60 * 60 * 24 * 7,
+    path: '/'
+  })
+}
+
+const buildClearCookie = () => {
+  return serialize('token', '', {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 0,
+    path: '/'
+  })
+}
+
+authRouter.post('/login', loginLimiter, async (req, res): Promise<void> => {
   const data: UserIn = req.body
-  if (!validateUserLogin(data)) return res.status(400).json({ code: ErrorCodes.InvalidCredentials })
+  if (!validateUserLogin(data)) {
+    res.status(400).json({ code: ErrorCodes.InvalidCredentials })
+    return
+  }
   try {
     const result = await turso.execute({
       sql: 'SELECT * FROM users WHERE email = ?',
       args: [data.email]
     })
-    const user = result.rows[0] as unknown as User
-    if (!user) {
-      return res.status(404).json({ code: ErrorCodes.UserNotFound })
+    const user = result.rows[0] as unknown as User | undefined
+    const passwordHash = user?.password ?? DUMMY_HASH
+    const isValid = await bcrypt.compare(data.password, passwordHash)
+    if (!user || !isValid) {
+      res.status(400).json({ code: ErrorCodes.InvalidCredentials })
+      return
     }
-    const isValid = await bcrypt.compare(data.password, user.password)
-    if (!isValid) return res.status(400).json({ code: ErrorCodes.PasswordIncorrect })
 
-    const expiresIn = '7d'
-    const token = jwt.sign({ email: user.email }, secret, { expiresIn })
-    const role = (await isAdmin(user.email)) ? 'admin' : 'client'
-    const cookie = serialize('token', token, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? 'none' : 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/'
-    })
-    res.setHeader('Set-Cookie', cookie)
-    res.status(200).json({ role })
+    const token = jwt.sign({ email: user.email, pwd: user.passwordChangedAt ?? 0 }, secret, { expiresIn })
+    res.setHeader('Set-Cookie', buildAuthCookie(token))
+    res.status(200).json({ role: user.role })
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Error While Login User: ', error.message)
-      return res.status(500).json({ code: ErrorCodes.DatabaseError })
+      res.status(500).json({ code: ErrorCodes.DatabaseError })
+      return
     }
     console.error('Unhandler Error While Login User: ', error.toString())
-    return res.sendStatus(500)
+    res.sendStatus(500)
   }
 })
 
-auth.post('/register', async (req, res): Promise<any> => {
-  const data: UserIn = req.body
-  if (!validateUser(data)) return res.status(400).json({ message: 'Invalid User', code: ErrorCodes.InvalidCredentials })
-  if (await isUserExist(data.email)) return res.status(409).json({ code: ErrorCodes.AlreadyExist })
+authRouter.post('/logout', (_req, res): void => {
+  res.setHeader('Set-Cookie', buildClearCookie())
+  res.sendStatus(200)
+})
+
+authRouter.post('/register', registerLimiter, auth, adminOnly, async (req, res): Promise<void> => {
+  const data = req.body as UserIn & { role?: string }
+  if (!validateUser(data)) {
+    res.status(400).json({ message: 'Invalid User', code: ErrorCodes.InvalidCredentials })
+    return
+  }
+  if (await isUserExist(data.email)) {
+    res.status(409).json({ code: ErrorCodes.AlreadyExist })
+    return
+  }
+  const role = data.role === 'admin' ? 'admin' : 'client'
   try {
     const password = await bcrypt.hash(data.password, saltRounds)
     await turso.execute({
       sql: 'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-      args: [data.name, data.email, password, 'client']
+      args: [data.name, data.email, password, role]
     })
     res.sendStatus(201)
   } catch (error: any) {
     if (error instanceof LibsqlError) {
       console.error('Error While Register User: ', error.message)
-      return res.status(500).json({ code: ErrorCodes.DatabaseError })
+      res.status(500).json({ code: ErrorCodes.DatabaseError })
+      return
     }
     console.error('Unhandler Error While Register User: ', error.toString())
-    return res.sendStatus(500)
+    res.sendStatus(500)
   }
 })
 
-auth.get('/me', async (req, res): Promise<any> => {
-  const token = req.cookies.token
-  if (!token) return res.status(401).json({ code: ErrorCodes.AccessDenied })
+authRouter.get('/me', auth, (req, res): void => {
+  if (!req.user) {
+    res.status(401).json({ code: ErrorCodes.AccessDenied })
+    return
+  }
+  res.status(200).json({ email: req.user.email, role: req.user.role })
+})
+
+authRouter.patch('/password', auth, async (req, res): Promise<void> => {
+  if (!req.user) {
+    res.status(401).json({ code: ErrorCodes.AccessDenied })
+    return
+  }
+  const parsed = changePasswordSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
+    return
+  }
   try {
-    const user = jwt.verify(token, secret) as User
-    if (!(await isUserExist(user.email))) {
-      return res.status(404).json({ code: ErrorCodes.UserNotFound })
+    const rows = await turso.execute({
+      sql: 'SELECT password FROM users WHERE email = ?',
+      args: [req.user.email]
+    })
+    const row = rows.rows[0] as unknown as { password?: string } | undefined
+    if (!row?.password) {
+      res.status(404).json({ code: ErrorCodes.UserNotFound })
+      return
     }
-    const role = (await isAdmin(user.email)) ? 'admin' : 'client'
-    res.status(200).json({ email: user.email, role })
+    const isValid = await bcrypt.compare(parsed.data.currentPassword, row.password)
+    if (!isValid) {
+      res.status(400).json({ code: ErrorCodes.PasswordIncorrect })
+      return
+    }
+    const newPassword = await bcrypt.hash(parsed.data.newPassword, saltRounds)
+    const passwordChangedAt = Date.now()
+    await turso.execute({
+      sql: 'UPDATE users SET password = ?, passwordChangedAt = ? WHERE email = ?',
+      args: [newPassword, passwordChangedAt, req.user.email]
+    })
+    const token = jwt.sign({ email: req.user.email, pwd: passwordChangedAt }, secret, { expiresIn })
+    res.setHeader('Set-Cookie', buildAuthCookie(token))
+    res.sendStatus(200)
   } catch (error: any) {
-    if (error instanceof jwt.TokenExpiredError) {
-      console.error('Token Expired Error')
-      return res.status(401).json({ code: ErrorCodes.TokenExpired })
+    if (error instanceof LibsqlError) {
+      console.error('Error While Changing Password: ', error.message)
+      res.status(500).json({ code: ErrorCodes.DatabaseError })
+      return
     }
-    console.error('Auth Error: ', error.toString())
-    return res.status(500).json({ code: ErrorCodes.AuthError })
+    console.error('Unhandler Error While Changing Password: ', error.toString())
+    res.sendStatus(500)
   }
 })
