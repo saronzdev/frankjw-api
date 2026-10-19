@@ -15,7 +15,7 @@
   },
   "keywords": [],
   "author": "saronzdev",
-  "license": "ISC",
+  "license": "GPL-3.0",
   "dependencies": {
     "@libsql/client": "^0.15.9",
     "@upstash/ratelimit": "^2.2.0",
