@@ -16,6 +16,34 @@ export const migrateCreatedAtTimestamps = async () => {
   console.log(`createdAt updated: ${result.rowsAffected}`)
 }
 
+/** Legacy table DDLs stored text defaults as literals ('CAST(unixepoch() * 1000 AS INTEGER)'),
+ * so rows created afterwards ended up with text createdAt (breaking the newest-first sort)
+ * and text sales values. This migration rewrites any non-numeric createdAt to the migration
+ * time and normalizes sales to 0; the app now inserts an explicit Date.now() so it only
+ * ever has to run once. */
+export const migrateNumericColumns = async () => {
+  const now = Date.now()
+  const createdAt = await turso.execute({
+    sql: `
+      UPDATE products
+      SET createdAt = ?
+      WHERE createdAt IS NULL
+        OR typeof(createdAt) != 'integer'
+        OR createdAt < 1000000000000
+    `,
+    args: [now]
+  })
+  const sales = await turso.execute({
+    sql: `
+      UPDATE products
+      SET sales = 0
+      WHERE sales IS NULL
+        OR typeof(sales) != 'integer'
+    `
+  })
+  console.log(`numeric columns repaired: createdAt=${createdAt.rowsAffected}, sales=${sales.rowsAffected}`)
+}
+
 export const migrateCategoryNames = async () => {
   const result = await turso.execute({
     sql: `

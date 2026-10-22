@@ -18,7 +18,7 @@ export const addProduct = async (req: Request, res: Response): Promise<void> => 
   }
   try {
     await turso.execute({
-      sql: 'INSERT INTO products (productId, description, category, price, weight, karats, pictures, isActive, hasDiscount, offerPrice) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      sql: 'INSERT INTO products (productId, description, category, price, weight, karats, pictures, isActive, hasDiscount, offerPrice, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       args: [
         productData.productId,
         productData.description,
@@ -29,7 +29,8 @@ export const addProduct = async (req: Request, res: Response): Promise<void> => 
         JSON.stringify(productData.pictures),
         productData.isActive,
         productData.hasDiscount,
-        productData.offerPrice ?? null
+        productData.offerPrice ?? null,
+        Date.now()
       ]
     })
     res.sendStatus(201)

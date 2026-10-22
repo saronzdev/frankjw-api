@@ -1,5 +1,5 @@
 import { turso } from './config'
-import { migrateCategoryNames, migrateCreatedAtTimestamps, migrateUserPasswordChangedAt } from './migrations'
+import { migrateCategoryNames, migrateCreatedAtTimestamps, migrateNumericColumns, migrateUserPasswordChangedAt } from './migrations'
 
 let dbInitialized = false
 
@@ -24,6 +24,7 @@ const runMigrations = async () => {
   await apply('createdAt_timestamps', migrateCreatedAtTimestamps)
   await apply('category_names', migrateCategoryNames)
   await apply('user_password_changed_at', migrateUserPasswordChangedAt)
+  await apply('numeric_columns', migrateNumericColumns)
 }
 
 const initProductsDatabase = async () => {
