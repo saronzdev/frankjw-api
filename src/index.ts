@@ -4,6 +4,7 @@ import morgan from 'morgan'
 import { initdb } from './utils/database'
 import { products } from './routers/products'
 import { authRouter } from './routers/auth'
+import { uploads } from './routers/uploads'
 import cookieParser from 'cookie-parser'
 import { corsOptions, ErrorCodes, isProd } from './utils/config'
 import { assertEnv } from './utils/env'
@@ -34,6 +35,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/v1', products)
 app.use('/api/v1/auth', authRouter)
+app.use('/api/v1', uploads)
 
 if (!process.env.VERCEL) {
   initdb()
