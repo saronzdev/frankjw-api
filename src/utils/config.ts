@@ -52,7 +52,12 @@ export const createProductData = (data: ProductInput): ProductRow => {
 }
 
 export const isProd = process.env.NODE_ENV === 'production'
-const tursoOptions: Config = isProd ? { url: tursoUrl, authToken: tursoToken } : { url: process.env.TURSO_URL ?? 'file:./local.db' }
+const isEmbeddedDbUrl = (url: string | undefined) => !!url && (url.startsWith(':memory:') || url.startsWith('file:'))
+const tursoOptions: Config = isProd
+  ? { url: tursoUrl, authToken: tursoToken }
+  : isEmbeddedDbUrl(process.env.TURSO_URL)
+    ? { url: process.env.TURSO_URL as string }
+    : { url: 'file:./local.db' }
 export const turso = createClient(tursoOptions)
 
 const PROD_ORIGINS = [
