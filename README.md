@@ -19,6 +19,7 @@ The convenience API surface is public, but the design assumes untrusted input ev
 - **Validation at the edge** — every admin payload is parsed with [zod](https://zod.dev/) before touching the database; TypeScript types are derived from the schemas.
 - **Strict CORS** — exact origin whitelist (production domains + `CORS_EXTRA_ORIGINS`), `credentials: true`.
 - **Fail-fast environment** — required variables are asserted at startup (`src/utils/env.ts`) instead of failing randomly at request time.
+- **Server-side image storage** — product image upload/delete happens only here, authorized by the JWT cookie, MIME allowlist (jpg/png/webp/gif/avif), 2 MB cap and a secret storage key kept exclusively in server env. The browser bundle never receives storage credentials; in dev without `SUPABASE_URL` the endpoints return `503` and the client surfaces the notice without touching the production bucket. Storage talks through `@supabase/supabase-js`, so both new secret keys (`sb_secret_…`, sent on the `apikey` header) and the legacy `service_role` JWT are supported.
 
 ## Tech stack
 
@@ -47,9 +48,11 @@ The convenience API surface is public, but the design assumes untrusted input ev
 │   │   └── rateLimit.ts          # Upstash Redis limiters
 │   ├── routers/
 │   │   ├── auth.ts               # login / logout / register / me / password
-│   │   └── products.ts           # catalog + admin CRUD routes
+│   │   ├── products.ts           # catalog + admin CRUD routes
+│   │   └── uploads.ts            # admin image upload/delete (raw body, MIME allowlist)
 │   ├── utils/
 │   │   ├── config.ts             # error codes, config, CORS options, Turso client
+│   │   ├── storage.ts            # Supabase Storage via @supabase/supabase-js (secret key server-side)
 │   │   ├── database.ts           # schema init + tracked migration runner
 │   │   ├── migrations.ts         # idempotent data migrations
 │   │   ├── schemas.ts            # zod schemas + derived types
@@ -78,7 +81,7 @@ pnpm test       # run once
 pnpm test:watch # watch mode
 ```
 
-Each test file gets an isolated in-memory Turso database (best slices of full HTTP traffic through the real Express app), so nothing external must be mocked and no shared state can leak between suites. The suite covers auth flows, product CRUD validation, error contracts, rate limiting and password-change token revocation.
+Each test file gets an isolated in-memory Turso database (best slices of full HTTP traffic through the real Express app), so nothing external must be mocked and no shared state can leak between suites. The suite covers auth flows, product CRUD validation, error contracts, rate limiting, upload authorization/validation and password-change token revocation; external Supabase calls are stubbed via global `fetch`.
 
 ## Endpoints
 
@@ -106,6 +109,8 @@ Base path: `/api/v1`. Error responses carry a numeric `code`:
 | `POST` | `/products` | Admin | Creates a product (zod-validated: numeric coercion incl. decimal commas, karats array, offer price rules). |
 | `PUT` | `/products/:id` | Admin | Updates a product. |
 | `DELETE` | `/products/:id` | Admin | Deletes a product. |
+| `POST` | `/uploads` | Admin | Raw image upload (≤2 MB, MIME allowlist) to the `pictures` bucket. Returns `{url}` — the public URL to store in the product row. |
+| `DELETE` | `/uploads?url=…` | Admin | Deletes an image by public URL (bucket- and prefix-restricted). |
 
 ### Examples
 
@@ -131,8 +136,10 @@ Admin routes require a valid JWT cookie and an `admin` role in the database.
 | `NODE_ENV` | No | `production` enables Turso and secure cookies. |
 | `JWT_SECRET` | Yes | Secret used to sign JWTs. Validated at startup. |
 | `SALT_ROUNDS` | No | bcrypt cost (default `10`). |
-| `TURSO_URL` | Prod | Turso database URL. In non-production it may override the local SQLite file (used by the test suite with `:memory:`). |
+| `TURSO_URL` | Prod | Turso URL for production. In non-production only embedded URLs are honored (`:memory:` for the test suite, `file:` paths); a remote `libsql://` value is ignored and local `file:./local.db` is used instead. |
 | `TURSO_TOKEN` | Prod | Turso auth token. Validated at startup in production. |
+| `SUPABASE_URL` | Prod | Supabase project URL (Project Settings → API). Required in production; optional in dev (upload endpoints return `503` without it). |
+| `SUPABASE_SERVICE_KEY` | Prod | Supabase secret key (`sb_secret_…`, recommended) or legacy `service_role` JWT. Server-only; required in production, optional in dev. |
 | `CORS_EXTRA_ORIGINS` | No | Comma-separated extra allowed origins (e.g. Vercel previews). |
 | `UPSTASH_REDIS_REST_URL` | No | Upstash REST URL. Enables distributed rate limiting. |
 | `UPSTASH_REDIS_REST_TOKEN` | No | Upstash REST token. Both must be set for distributed limiting; falls back to in-memory otherwise. |
