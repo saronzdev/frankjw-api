@@ -1,0 +1,11 @@
+Initializing database...
+Database tables created/verified
+Server running on port 3000
+Database already initialized
+[0mGET / [32m200[0m 7.496 ms - 38[0m
+Database already initialized
+[0mGET /api/v1/products [32m200[0m 24.468 ms - 153760[0m
+[0mPOST /api/v1/auth/login [33m400[0m 19.026 ms - 1416[0m
+[0mPOST /api/v1/auth/login [33m400[0m 1.720 ms - 1419[0m
+Database already initialized
+[0mPOST /api/v1/auth/login [33m401[0m 104.627 ms - 13[0m

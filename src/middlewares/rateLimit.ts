@@ -1,7 +1,7 @@
 import { Ratelimit, type Duration } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import rateLimit from 'express-rate-limit'
-import { ErrorCodes } from '../utils/config'
+import { ErrorCodes } from '../utils/config.js'
 import type { NextFunction, Request, RequestHandler, Response } from 'express'
 
 const message = { code: ErrorCodes.TooManyRequests }

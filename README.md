@@ -156,6 +156,7 @@ The project deploys to [Vercel](https://vercel.com/) serverless:
 ```
 
 - `api/index.ts` re-exports the Express app built in `src/index.ts`.
+- The API is ESM (`"type": "module"`); relative imports require the `.js` extension (`module: nodenext`).
 - The build step (`vercel-build`) runs `tsc --noEmit` as a type-check gate before deploying.
 - CI runs `pnpm lint`, `pnpm tsc --noEmit` and the test suite on every push to `main` and on pull requests.
 

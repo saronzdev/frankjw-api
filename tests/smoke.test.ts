@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import request from 'supertest'
-import { app } from '../src/index'
+import { app } from '../src/index.js'
 
 describe('api smoke', () => {
   it('GET /api/v1/products returns 200 array', async () => {

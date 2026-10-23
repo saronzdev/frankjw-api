@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import request from 'supertest'
-import { app } from '../src/index'
-import { turso } from '../src/utils/config'
-import { loginAndGetCookie, seedAdmin } from './helpers'
+import { app } from '../src/index.js'
+import { turso } from '../src/utils/config.js'
+import { loginAndGetCookie, seedAdmin } from './helpers.js'
 
 const agent = request(app)
 

@@ -1,14 +1,14 @@
 import { Router } from 'express'
-import { validateUser, validateUserLogin, isUserExist } from '../utils/validations'
-import type { User, UserIn } from '../types'
-import { ErrorCodes, isProd, saltRounds, secret, turso } from '../utils/config'
-import { changePasswordSchema } from '../utils/schemas'
+import { validateUser, validateUserLogin, isUserExist } from '../utils/validations.js'
+import type { User, UserIn } from '../types.js'
+import { ErrorCodes, isProd, saltRounds, secret, turso } from '../utils/config.js'
+import { changePasswordSchema } from '../utils/schemas.js'
 import { LibsqlError } from '@libsql/client'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import { serialize } from 'cookie'
-import { loginLimiter, registerLimiter } from '../middlewares/rateLimit'
-import { auth, adminOnly } from '../middlewares/auth'
+import { stringifySetCookie } from 'cookie'
+import { loginLimiter, registerLimiter } from '../middlewares/rateLimit.js'
+import { auth, adminOnly } from '../middlewares/auth.js'
 
 export const authRouter = Router()
 
@@ -16,7 +16,9 @@ const DUMMY_HASH = '$2b$10$xuJYvQS015hyp7V.WbZXpOW8nBVyEhBOe3pLIfbtyyPuz00rX4kN.
 const expiresIn = '7d'
 
 const buildAuthCookie = (token: string) => {
-  return serialize('token', token, {
+  return stringifySetCookie({
+    name: 'token',
+    value: token,
     httpOnly: true,
     secure: isProd,
     sameSite: isProd ? 'none' : 'lax',
@@ -26,7 +28,9 @@ const buildAuthCookie = (token: string) => {
 }
 
 const buildClearCookie = () => {
-  return serialize('token', '', {
+  return stringifySetCookie({
+    name: 'token',
+    value: '',
     httpOnly: true,
     secure: isProd,
     sameSite: isProd ? 'none' : 'lax',

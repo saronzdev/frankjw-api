@@ -1,5 +1,5 @@
-import { turso } from './config'
-import type { UserIn } from '../types'
+import { turso } from './config.js'
+import type { UserIn } from '../types.js'
 
 export const validateUser = (data: any): data is UserIn => {
   return typeof data.name === 'string' && typeof data.email === 'string' && typeof data.password === 'string'

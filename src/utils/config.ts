@@ -1,6 +1,6 @@
 import { Config } from '@libsql/client'
 import { createClient } from '@libsql/client'
-import type { ProductInput, ProductRow } from '../types'
+import type { ProductInput, ProductRow } from '../types.js'
 import { CorsOptions } from 'cors'
 
 export const ErrorCodes = {

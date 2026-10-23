@@ -1,5 +1,5 @@
-import { turso } from '../src/utils/config'
-import { initdb } from '../src/utils/database'
+import { turso } from '../src/utils/config.js'
+import { initdb } from '../src/utils/database.js'
 import bcrypt from 'bcrypt'
 
 export const loginAndGetCookie = async (request: any, email: string, password: string) => {

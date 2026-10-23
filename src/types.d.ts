@@ -1,4 +1,4 @@
-import type { ProductInput } from './utils/schemas'
+import type { ProductInput } from './utils/schemas.js'
 
 export type { ProductInput }
 

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
-import { ErrorCodes, secret, turso } from '../utils/config'
+import { ErrorCodes, secret, turso } from '../utils/config.js'
 
 export type AuthedUser = {
   email: string

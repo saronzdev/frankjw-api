@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { detectImageMime } from '../src/utils/imageSignature'
+import { detectImageMime } from '../src/utils/imageSignature.js'
 
 const bytes = (...values: number[]) => Buffer.from(values)
 const latin = (s: string) => Buffer.from(s, 'latin1')

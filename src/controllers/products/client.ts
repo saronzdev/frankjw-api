@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { LibsqlError } from '@libsql/client'
-import { ErrorCodes, turso } from '../../utils/config'
-import type { ProductType } from '../../types'
+import { ErrorCodes, turso } from '../../utils/config.js'
+import type { ProductType } from '../../types.js'
 
 const parseJson = <T>(value: unknown, fallback: T): T => {
   if (typeof value !== 'string') return fallback
