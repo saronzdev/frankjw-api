@@ -50,7 +50,7 @@ authRouter.post('/login', loginLimiter, async (req, res): Promise<void> => {
     const passwordHash = user?.password ?? DUMMY_HASH
     const isValid = await bcrypt.compare(data.password, passwordHash)
     if (!user || !isValid) {
-      res.status(400).json({ code: ErrorCodes.InvalidCredentials })
+      res.status(401).json({ code: ErrorCodes.InvalidCredentials })
       return
     }
 

@@ -16,6 +16,9 @@
   "keywords": [],
   "author": "saronzdev",
   "license": "GPL-3.0",
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
     "@libsql/client": "^0.15.9",
     "@supabase/supabase-js": "^2.118.0",
@@ -27,6 +30,7 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "zod": "^4.6.7"

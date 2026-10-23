@@ -18,15 +18,15 @@ describe('auth', () => {
     expect(cookie).toContain('HttpOnly')
   })
 
-  it('login returns 400 code 1002 for wrong password', async () => {
+  it('login returns 401 code 1002 for wrong password', async () => {
     const res = await agent.post('/api/v1/auth/login').send({ email: 'admin@test.local', password: 'wrong-password' })
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(401)
     expect(res.body.code).toBe(1002)
   })
 
-  it('login returns 400 code 1002 for unknown email (same code, anti-enumeration)', async () => {
+  it('login returns 401 code 1002 for unknown email (same code, anti-enumeration)', async () => {
     const res = await agent.post('/api/v1/auth/login').send({ email: 'ghost@test.local', password: 'whatever-pass' })
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(401)
     expect(res.body.code).toBe(1002)
   })
 
