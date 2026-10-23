@@ -8,6 +8,7 @@ import {
   isStorageConfigured,
   uploadImage
 } from '../utils/storage'
+import { detectImageMime } from '../utils/imageSignature'
 
 export const uploads = Router()
 
@@ -27,7 +28,13 @@ uploads.post(
       res.status(400).json({ code: ErrorCodes.RequiredFieldMissing })
       return
     }
-    if (!isAllowedImageMime(mime) || body.length > MAX_IMAGE_BYTES) {
+    const detectedMime = detectImageMime(body)
+    if (
+      !isAllowedImageMime(mime) ||
+      detectedMime === undefined ||
+      mime !== detectedMime ||
+      body.length > MAX_IMAGE_BYTES
+    ) {
       res.status(400).json({ code: ErrorCodes.UploadFileError })
       return
     }

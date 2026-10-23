@@ -54,7 +54,7 @@ describe('password change', () => {
 
   it('login fails with old password and works with the new one', async () => {
     const oldLogin = await agent.post('/api/v1/auth/login').send({ email: 'admin@test.local', password: 'Admin12345' })
-    expect(oldLogin.status).toBe(400)
+    expect(oldLogin.status).toBe(401)
     expect(oldLogin.body.code).toBe(1002)
 
     const { cookie } = await loginAndGetCookie(agent, 'admin@test.local', NEW_PASSWORD)

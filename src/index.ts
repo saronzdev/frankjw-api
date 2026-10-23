@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
+import helmet from 'helmet'
 import { initdb } from './utils/database'
 import { products } from './routers/products'
 import { authRouter } from './routers/auth'
@@ -14,6 +15,8 @@ assertEnv()
 
 export const app = express()
 
+app.set('trust proxy', 1)
+app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }))
 app.use(cors(corsOptions))
 app.use(cookieParser())
 app.use(morgan(isProd ? 'tiny' : 'dev'))

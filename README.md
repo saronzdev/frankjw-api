@@ -1,6 +1,6 @@
 # Frank Joyería — REST API
 
-REST API for [frankjoyeriacuba.com](https://frankjoyeriacuba.com), an e-commerce for jewelry. It serves the public product catalog and the admin authentication and CRUD operations used by the [frontend](https://frankjw.vercel.app) (separate repository).
+REST API for [frankjoyeriacuba.com](https://frankjoyeriacuba.com), an e-commerce for jewelry. It serves the public product catalog and the admin authentication and CRUD operations used by the [frontend](https://frankjoyeriacuba.com) (separate repository).
 
 ![ci](https://github.com/saronzdev/frankjw-api/actions/workflows/ci.yml/badge.svg?branch=main)
 ![license](https://img.shields.io/badge/license-GPL--3.0-blue)
@@ -14,12 +14,13 @@ The convenience API surface is public, but the design assumes untrusted input ev
 - **Authentication** — JWT signed with HS256, delivered in an `httpOnly` cookie (`Secure`, `SameSite=None` in production). Verification re-reads the user row on every request, so role changes take effect immediately.
 - **Token revocation** — each token carries a `pwd` claim (ms timestamp). Password changes write `passwordChangedAt` on the user row; any token issued before that moment is rejected, which kills stolen cookies across devices.
 - **Registration is admin-only** — new users are created by an authenticated admin via `POST /auth/register`.
-- **Anti-enumeration login** — unknown emails and wrong passwords return the same `400 {code: 1002}` after a `bcrypt.compare` against a dummy hash, so response shape and timing expose nothing.
-- **Distributed rate limiting** — `login` (10 / 15 min), `register` (5 / h) and `sales` (30 / min) run against Upstash Redis (sliding window, per-IP); fails open and falls back to an in-memory store when Upstash is not configured.
+- **Anti-enumeration login** — unknown emails and wrong passwords return the same `401 {code: 1002}` after a `bcrypt.compare` against a dummy hash, so response shape and timing expose nothing.
+- **Distributed rate limiting** — `login` (10 / 15 min), `register` (5 / h) and `sales` (30 / min) run against Upstash Redis (sliding window, per-IP); fails open and falls back to an in-memory store when Upstash is not configured. `app.set('trust proxy', 1)` keeps the correct client IP behind Vercel's edge (one hop), so limits are enforced per visitor and not globally.
 - **Validation at the edge** — every admin payload is parsed with [zod](https://zod.dev/) before touching the database; TypeScript types are derived from the schemas.
 - **Strict CORS** — exact origin whitelist (production domains + `CORS_EXTRA_ORIGINS`), `credentials: true`.
+- **Security headers** — [helmet](https://github.com/helmetjs/helmet) sets baseline response headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, etc.) on every route; CSP is left off because the SPA is served separately by the frontend.
 - **Fail-fast environment** — required variables are asserted at startup (`src/utils/env.ts`) instead of failing randomly at request time.
-- **Server-side image storage** — product image upload/delete happens only here, authorized by the JWT cookie, MIME allowlist (jpg/png/webp/gif/avif), 2 MB cap and a secret storage key kept exclusively in server env. The browser bundle never receives storage credentials; in dev without `SUPABASE_URL` the endpoints return `503` and the client surfaces the notice without touching the production bucket. Storage talks through `@supabase/supabase-js`, so both new secret keys (`sb_secret_…`, sent on the `apikey` header) and the legacy `service_role` JWT are supported.
+- **Server-side image storage** — product image upload/delete happens only here, authorized by the JWT cookie, MIME allowlist (jpg/png/webp/gif/avif) verified against the file's magic bytes (`src/utils/imageSignature.ts`), 2 MB cap and a secret storage key kept exclusively in server env. The browser bundle never receives storage credentials; in dev without `SUPABASE_URL` the endpoints return `503` and the client surfaces the notice without touching the production bucket. Storage talks through `@supabase/supabase-js`, so both new secret keys (`sb_secret_…`, sent on the `apikey` header) and the legacy `service_role` JWT are supported.
 
 ## Tech stack
 
@@ -39,7 +40,7 @@ The convenience API surface is public, but the design assumes untrusted input ev
 ```
 ├── api/index.ts                  # Vercel serverless entry point
 ├── src/
-│   ├── index.ts                  # Express app assembly, CORS, SSE, DB init middleware
+│   ├── index.ts                  # Express app assembly, CORS, helmet security headers, DB init middleware
 │   ├── controllers/products/
 │   │   ├── admin.ts              # create / update / delete products
 │   │   └── client.ts             # public catalog + atomic sales counter
