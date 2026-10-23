@@ -1,6 +1,6 @@
 # Frank Joyería — REST API
 
-REST API for [frankjoyeriacuba.com](https://frankjoyeriacuba.com), an e-commerce for jewelry. It serves the public product catalog and the admin authentication and CRUD operations used by the [frontend](https://frankjw.vercel.app) (separate repository).
+REST API for [frankjoyeriacuba.com](https://frankjoyeriacuba.com), an e-commerce for jewelry. It serves the public product catalog and the admin authentication and CRUD operations used by the [frontend](https://frankjoyeriacuba.com) (separate repository).
 
 ![ci](https://github.com/saronzdev/frankjw-api/actions/workflows/ci.yml/badge.svg?branch=main)
 ![license](https://img.shields.io/badge/license-GPL--3.0-blue)
