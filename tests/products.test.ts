@@ -53,6 +53,29 @@ describe('products', () => {
     expect(p.pictures).toEqual([])
   })
 
+  it('POST stores createdAt and sales as numbers so newest-first sort works', async () => {
+    const before = Date.now()
+    const res = await agent
+      .post('/api/v1/products')
+      .set('Cookie', adminCookie)
+      .send({ ...baseProduct, productId: 'TEST-101' })
+    expect(res.status).toBe(201)
+
+    const list = await agent.get('/api/v1/products')
+    const created = list.body.find((p: { productId: string }) => p.productId === 'test-101')
+    expect(created).toBeDefined()
+    expect(typeof created.createdAt).toBe('number')
+    expect(created.createdAt).toBeGreaterThanOrEqual(before)
+    expect(created.createdAt).toBeLessThanOrEqual(Date.now())
+    expect(typeof created.sales).toBe('number')
+    expect(created.sales).toBe(0)
+
+    const del = await agent
+      .delete(`/api/v1/products/${created.id}`)
+      .set('Cookie', adminCookie)
+    expect(del.status).toBe(200)
+  })
+
   it('POST duplicate productId returns 400 code 1102', async () => {
     const res = await agent.post('/api/v1/products').set('Cookie', adminCookie).send(baseProduct)
     expect(res.status).toBe(400)
