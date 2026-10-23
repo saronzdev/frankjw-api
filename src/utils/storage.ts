@@ -22,9 +22,15 @@ export const isAllowedImageMime = (mime: string): boolean => mime in EXTENSION_B
 
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024
 
-const storageRequest = async (config: { url: string; key: string }, path: string, init?: RequestInit): Promise<Response> => {
+const storageRequest = async (
+  config: { url: string; key: string },
+  path: string,
+  method: 'POST' | 'DELETE',
+  init?: Omit<RequestInit, 'method'>
+): Promise<Response> => {
   return fetch(`${config.url}/storage/v1/object/${BUCKET}/${path}`, {
     ...init,
+    method,
     headers: {
       Authorization: `Bearer ${config.key}`,
       ...(init?.headers ?? {})
@@ -40,7 +46,7 @@ export const uploadImage = async (buffer: Buffer, mime: string): Promise<string>
   if (!config) throw new Error('Storage not configured')
 
   const fileName = `${crypto.randomUUID()}.${extension}`
-  const response = await storageRequest(config, fileName, {
+  const response = await storageRequest(config, fileName, 'POST', {
     headers: { 'Content-Type': mime, 'x-upsert': 'false' },
     body: new Uint8Array(buffer)
   })
@@ -58,7 +64,7 @@ export const deleteImage = async (url: string): Promise<void> => {
   const path = decodeURIComponent(new URL(url).pathname.replace(PUBLIC_PATH_MARKER, ''))
   if (!path || path.includes('/') || !path.includes('.')) throw new Error('Invalid file url')
 
-  const response = await storageRequest(config, path)
+  const response = await storageRequest(config, path, 'DELETE')
   if (!response.ok && response.status !== 404) {
     const detail = await response.text().catch(() => '')
     throw new Error(`Image delete failed (${response.status}): ${detail}`)

@@ -8,6 +8,14 @@ const agent = request(app)
 let adminCookie: string
 
 describe('uploads', () => {
+  const makeStorageFetch = (status: number) =>
+    vi.fn(async (_url: string, init?: RequestInit) => {
+      if ((init?.method ?? 'GET') === 'GET' && init?.body) {
+        throw new TypeError('Request with GET/HEAD method cannot have body.')
+      }
+      return new Response(null, { status })
+    })
+
   beforeAll(async () => {
     await seedAdmin()
     const { cookie } = await loginAndGetCookie(agent, 'admin@test.local', 'Admin12345')
@@ -37,7 +45,7 @@ describe('uploads', () => {
   })
 
   it('POST valid image calls storage and returns 201 public url', async () => {
-    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 201 }))
+    const fetchMock = makeStorageFetch(201)
     vi.stubGlobal('fetch', fetchMock)
     process.env.SUPABASE_URL = 'https://stub.supabase.co'
     process.env.SUPABASE_SERVICE_KEY = 'service-key'
@@ -53,7 +61,54 @@ describe('uploads', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const [url, init] = fetchMock.mock.calls[0]
     expect(url).toContain('/storage/v1/object/pictures/')
-    expect(init?.headers).toMatchObject({ Authorization: 'Bearer service-key' })
+    expect(init?.method).toBe('POST')
+    expect(init?.body).toBeInstanceOf(Uint8Array)
+    expect(init?.headers).toMatchObject({
+      Authorization: 'Bearer service-key',
+      'Content-Type': 'image/png',
+      'x-upsert': 'false'
+    })
+  })
+
+  it('DELETE valid url calls storage with DELETE method and returns 200', async () => {
+    const fetchMock = makeStorageFetch(200)
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await agent
+      .delete('/api/v1/uploads')
+      .set('Cookie', adminCookie)
+      .query({ url: 'https://stub.supabase.co/storage/v1/object/public/pictures/abc123.webp' })
+
+    expect(res.status).toBe(200)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('https://stub.supabase.co/storage/v1/object/pictures/abc123.webp')
+    expect(init?.method).toBe('DELETE')
+  })
+
+  it('DELETE tolerates storage 404 (already gone) and returns 200', async () => {
+    const fetchMock = makeStorageFetch(404)
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await agent
+      .delete('/api/v1/uploads')
+      .set('Cookie', adminCookie)
+      .query({ url: 'https://stub.supabase.co/storage/v1/object/public/pictures/gone.jpeg' })
+
+    expect(res.status).toBe(200)
+  })
+
+  it('DELETE invalid url returns 400 without touching storage', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await agent
+      .delete('/api/v1/uploads')
+      .set('Cookie', adminCookie)
+      .query({ url: 'https://stub.supabase.co/storage/v1/object/public/pictures/sub/dir.png' })
+
+    expect(res.status).toBe(400)
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('POST wrong mime type returns 400 without touching storage', async () => {
