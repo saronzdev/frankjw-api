@@ -19,7 +19,7 @@ The convenience API surface is public, but the design assumes untrusted input ev
 - **Validation at the edge** — every admin payload is parsed with [zod](https://zod.dev/) before touching the database; TypeScript types are derived from the schemas.
 - **Strict CORS** — exact origin whitelist (production domains + `CORS_EXTRA_ORIGINS`), `credentials: true`.
 - **Fail-fast environment** — required variables are asserted at startup (`src/utils/env.ts`) instead of failing randomly at request time.
-- **Server-side image storage** — product image upload/delete happens only here, authorized by the JWT cookie, MIME allowlist (jpg/png/webp/gif/avif), 2 MB cap and the `service_role` key kept exclusively in server env. The browser bundle never receives storage credentials; in dev without `SUPABASE_URL` the endpoints return `503` and the client surfaces the notice without touching the production bucket.
+- **Server-side image storage** — product image upload/delete happens only here, authorized by the JWT cookie, MIME allowlist (jpg/png/webp/gif/avif), 2 MB cap and a secret storage key kept exclusively in server env. The browser bundle never receives storage credentials; in dev without `SUPABASE_URL` the endpoints return `503` and the client surfaces the notice without touching the production bucket. Storage talks through `@supabase/supabase-js`, so both new secret keys (`sb_secret_…`, sent on the `apikey` header) and the legacy `service_role` JWT are supported.
 
 ## Tech stack
 
@@ -52,7 +52,7 @@ The convenience API surface is public, but the design assumes untrusted input ev
 │   │   └── uploads.ts            # admin image upload/delete (raw body, MIME allowlist)
 │   ├── utils/
 │   │   ├── config.ts             # error codes, config, CORS options, Turso client
-│   │   ├── storage.ts            # Supabase Storage REST calls (service key server-side)
+│   │   ├── storage.ts            # Supabase Storage via @supabase/supabase-js (secret key server-side)
 │   │   ├── database.ts           # schema init + tracked migration runner
 │   │   ├── migrations.ts         # idempotent data migrations
 │   │   ├── schemas.ts            # zod schemas + derived types
@@ -139,7 +139,7 @@ Admin routes require a valid JWT cookie and an `admin` role in the database.
 | `TURSO_URL` | Prod | Turso URL for production. In non-production only embedded URLs are honored (`:memory:` for the test suite, `file:` paths); a remote `libsql://` value is ignored and local `file:./local.db` is used instead. |
 | `TURSO_TOKEN` | Prod | Turso auth token. Validated at startup in production. |
 | `SUPABASE_URL` | Prod | Supabase project URL (Project Settings → API). Required in production; optional in dev (upload endpoints return `503` without it). |
-| `SUPABASE_SERVICE_KEY` | Prod | Supabase `service_role` key. Server-only; required in production, optional in dev. |
+| `SUPABASE_SERVICE_KEY` | Prod | Supabase secret key (`sb_secret_…`, recommended) or legacy `service_role` JWT. Server-only; required in production, optional in dev. |
 | `CORS_EXTRA_ORIGINS` | No | Comma-separated extra allowed origins (e.g. Vercel previews). |
 | `UPSTASH_REDIS_REST_URL` | No | Upstash REST URL. Enables distributed rate limiting. |
 | `UPSTASH_REDIS_REST_TOKEN` | No | Upstash REST token. Both must be set for distributed limiting; falls back to in-memory otherwise. |
