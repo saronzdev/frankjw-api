@@ -1,14 +1,7 @@
+import { createClient } from '@supabase/supabase-js'
+
 const BUCKET = 'pictures'
 const PUBLIC_PATH_MARKER = `/storage/v1/object/public/${BUCKET}/`
-
-const storageConfig = (): { url: string; key: string } | null => {
-  const url = process.env.SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_KEY
-  if (!url || !key) return null
-  return { url, key }
-}
-
-export const isStorageConfigured = (): boolean => storageConfig() !== null
 
 const EXTENSION_BY_MIME: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -22,19 +15,16 @@ export const isAllowedImageMime = (mime: string): boolean => mime in EXTENSION_B
 
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024
 
-const storageRequest = async (
-  config: { url: string; key: string },
-  path: string,
-  method: 'POST' | 'DELETE',
-  init?: Omit<RequestInit, 'method'>
-): Promise<Response> => {
-  return fetch(`${config.url}/storage/v1/object/${BUCKET}/${path}`, {
-    ...init,
-    method,
-    headers: {
-      Authorization: `Bearer ${config.key}`,
-      ...(init?.headers ?? {})
-    }
+export const isStorageConfigured = (): boolean =>
+  Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY)
+
+const storage = () => {
+  const url = process.env.SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_KEY
+  if (!url || !key) throw new Error('Storage not configured')
+
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false }
   })
 }
 
@@ -42,31 +32,24 @@ export const uploadImage = async (buffer: Buffer, mime: string): Promise<string>
   const extension = EXTENSION_BY_MIME[mime]
   if (!extension) throw new Error(`Unsupported mime type: ${mime}`)
 
-  const config = storageConfig()
-  if (!config) throw new Error('Storage not configured')
-
+  const supabase = storage()
   const fileName = `${crypto.randomUUID()}.${extension}`
-  const response = await storageRequest(config, fileName, 'POST', {
-    headers: { 'Content-Type': mime, 'x-upsert': 'false' },
-    body: new Uint8Array(buffer)
+  const { error } = await supabase.storage.from(BUCKET).upload(fileName, buffer, {
+    contentType: mime,
+    cacheControl: '31536000',
+    upsert: false
   })
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '')
-    throw new Error(`Image upload failed (${response.status}): ${detail}`)
-  }
-  return `https://${new URL(config.url).host}${PUBLIC_PATH_MARKER}${fileName}`
+  if (error) throw new Error(`Image upload failed: ${error.message}`)
+
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
+  return data.publicUrl
 }
 
 export const deleteImage = async (url: string): Promise<void> => {
-  const config = storageConfig()
-  if (!config) throw new Error('Storage not configured')
-
   const path = decodeURIComponent(new URL(url).pathname.replace(PUBLIC_PATH_MARKER, ''))
   if (!path || path.includes('/') || !path.includes('.')) throw new Error('Invalid file url')
 
-  const response = await storageRequest(config, path, 'DELETE')
-  if (!response.ok && response.status !== 404) {
-    const detail = await response.text().catch(() => '')
-    throw new Error(`Image delete failed (${response.status}): ${detail}`)
-  }
+  const supabase = storage()
+  const { error } = await supabase.storage.from(BUCKET).remove([path])
+  if (error) throw new Error(`Image delete failed: ${error.message}`)
 }
