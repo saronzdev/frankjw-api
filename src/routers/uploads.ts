@@ -1,14 +1,14 @@
 import { Router, raw } from 'express'
-import { auth, adminOnly } from '../middlewares/auth'
-import { ErrorCodes } from '../utils/config'
+import { auth, adminOnly } from '../middlewares/auth.js'
+import { ErrorCodes } from '../utils/config.js'
 import {
   MAX_IMAGE_BYTES,
   deleteImage,
   isAllowedImageMime,
   isStorageConfigured,
   uploadImage
-} from '../utils/storage'
-import { detectImageMime } from '../utils/imageSignature'
+} from '../utils/storage.js'
+import { detectImageMime } from '../utils/imageSignature.js'
 
 export const uploads = Router()
 

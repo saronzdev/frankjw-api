@@ -1,5 +1,5 @@
-import { turso } from './config'
-import { migrateCategoryNames, migrateCreatedAtTimestamps, migrateNumericColumns, migrateUserPasswordChangedAt } from './migrations'
+import { turso } from './config.js'
+import { migrateCategoryNames, migrateCreatedAtTimestamps, migrateNumericColumns, migrateUserPasswordChangedAt } from './migrations.js'
 
 let dbInitialized = false
 

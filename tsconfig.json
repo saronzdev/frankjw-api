@@ -2,7 +2,8 @@
   "compilerOptions": {
     "outDir": "dist",
     "sourceMap": true,
-    "module": "commonjs",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "target": "esnext",
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,

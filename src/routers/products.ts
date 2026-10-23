@@ -1,8 +1,8 @@
 import { Router } from 'express'
-import { auth, adminOnly } from '../middlewares/auth'
-import { salesLimiter } from '../middlewares/rateLimit'
-import { getAll, increaseSales } from '../controllers/products/client'
-import { addProduct, updateProduct, deleteProduct } from '../controllers/products/admin'
+import { auth, adminOnly } from '../middlewares/auth.js'
+import { salesLimiter } from '../middlewares/rateLimit.js'
+import { getAll, increaseSales } from '../controllers/products/client.js'
+import { addProduct, updateProduct, deleteProduct } from '../controllers/products/admin.js'
 
 export const products = Router()
 

@@ -1,4 +1,4 @@
-import { turso } from './config'
+import { turso } from './config.js'
 
 export const migrateCreatedAtTimestamps = async () => {
   const FIXED_DATE_MS = 1735689600000 // 2025-01-01T00:00:00Z

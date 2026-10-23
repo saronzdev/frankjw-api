@@ -1,8 +1,8 @@
 import { Request, Response } from 'express'
 import { LibsqlError } from '@libsql/client'
-import { productInputSchema } from '../../utils/schemas'
-import { ErrorCodes, createProductData, turso } from '../../utils/config'
-import { isProductExist } from '../../utils/validations'
+import { productInputSchema } from '../../utils/schemas.js'
+import { ErrorCodes, createProductData, turso } from '../../utils/config.js'
+import { isProductExist } from '../../utils/validations.js'
 
 export const addProduct = async (req: Request, res: Response): Promise<void> => {
   const parsed = productInputSchema.safeParse(req.body)
