@@ -1,5 +1,11 @@
 import { turso } from './config.js'
-import { migrateCategoryNames, migrateCreatedAtTimestamps, migrateNumericColumns, migrateUserPasswordChangedAt } from './migrations.js'
+import {
+  migrateCategoryNames,
+  migrateCategoryRename2026,
+  migrateCreatedAtTimestamps,
+  migrateNumericColumns,
+  migrateUserPasswordChangedAt
+} from './migrations.js'
 
 let dbInitialized = false
 
@@ -23,6 +29,7 @@ const runMigrations = async () => {
 
   await apply('createdAt_timestamps', migrateCreatedAtTimestamps)
   await apply('category_names', migrateCategoryNames)
+  await apply('category_names_2026', migrateCategoryRename2026)
   await apply('user_password_changed_at', migrateUserPasswordChangedAt)
   await apply('numeric_columns', migrateNumericColumns)
 }
