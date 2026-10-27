@@ -56,6 +56,21 @@ export const migrateCategoryNames = async () => {
   console.log(`categories renamed: ${result.rowsAffected}`)
 }
 
+export const migrateCategoryRename2026 = async () => {
+  const renames = [
+    ['pendientes y argollas', 'argollas y aretes'],
+    ['sets de joyas', 'conjuntos de joyas']
+  ] as const
+
+  for (const [from, to] of renames) {
+    const result = await turso.execute({
+      sql: 'UPDATE products SET category = ? WHERE lower(trim(category)) = ?',
+      args: [to, from]
+    })
+    console.log(`categories renamed (${from} -> ${to}): ${result.rowsAffected}`)
+  }
+}
+
 export const migrateUserPasswordChangedAt = async () => {
   const columns = await turso.execute('PRAGMA table_info(users)')
   const exists = columns.rows.some((row) => row.name === 'passwordChangedAt')
