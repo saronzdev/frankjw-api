@@ -12,7 +12,7 @@ const parseJson = <T>(value: unknown, fallback: T): T => {
   }
 }
 
-export const getAll = async (_req: Request, res: Response): Promise<void> => {
+export const getAll = async (req: Request, res: Response): Promise<void> => {
   try {
     const products = await turso.execute(`SELECT * FROM products ORDER BY createdAt DESC, id DESC`)
     const data = products.rows.map((p) => ({
@@ -20,7 +20,11 @@ export const getAll = async (_req: Request, res: Response): Promise<void> => {
       pictures: parseJson<string[]>(p.pictures, []),
       karats: parseJson<number[]>(p.karats, [])
     })) as unknown as ProductType[]
-    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300')
+    res.vary('Cookie')
+    res.set(
+      'Cache-Control',
+      req.cookies?.token ? 'private, no-store' : 'public, max-age=60, stale-while-revalidate=300'
+    )
     res.json(data)
   } catch (error: any) {
     if (error instanceof LibsqlError) {
