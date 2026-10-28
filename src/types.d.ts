@@ -2,9 +2,10 @@ import type { ProductInput } from './utils/schemas.js'
 
 export type { ProductInput }
 
-export type ProductRow = Omit<ProductInput, 'isActive' | 'hasDiscount'> & {
+export type ProductRow = Omit<ProductInput, 'isActive' | 'hasDiscount' | 'hasPreciousStones'> & {
   isActive: number
   hasDiscount: number
+  hasPreciousStones: number
 }
 
 export type ProductOut = {

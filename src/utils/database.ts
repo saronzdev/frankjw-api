@@ -4,6 +4,7 @@ import {
   migrateCategoryRename2026,
   migrateCreatedAtTimestamps,
   migrateNumericColumns,
+  migratePreciousStonesColumn,
   migrateUserPasswordChangedAt
 } from './migrations.js'
 
@@ -32,6 +33,7 @@ const runMigrations = async () => {
   await apply('category_names_2026', migrateCategoryRename2026)
   await apply('user_password_changed_at', migrateUserPasswordChangedAt)
   await apply('numeric_columns', migrateNumericColumns)
+  await apply('precious_stones', migratePreciousStonesColumn)
 }
 
 const initProductsDatabase = async () => {
@@ -49,6 +51,7 @@ const initProductsDatabase = async () => {
         sales INTEGER DEFAULT 0,
         isActive BOOLEAN NOT NULL,
         hasDiscount BOOLEAN NOT NULL,
+        hasPreciousStones INTEGER NOT NULL DEFAULT 0,
         offerPrice REAL,
         createdAt INTEGER DEFAULT (CAST(unixepoch() * 1000 AS INTEGER))
       )
