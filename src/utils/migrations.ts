@@ -71,6 +71,17 @@ export const migrateCategoryRename2026 = async () => {
   }
 }
 
+export const migratePreciousStonesColumn = async () => {
+  const columns = await turso.execute('PRAGMA table_info(products)')
+  const exists = columns.rows.some((row) => row.name === 'hasPreciousStones')
+  if (exists) {
+    console.log('products.hasPreciousStones already present')
+    return
+  }
+  await turso.execute('ALTER TABLE products ADD COLUMN hasPreciousStones INTEGER NOT NULL DEFAULT 0')
+  console.log('products.hasPreciousStones column added')
+}
+
 export const migrateUserPasswordChangedAt = async () => {
   const columns = await turso.execute('PRAGMA table_info(users)')
   const exists = columns.rows.some((row) => row.name === 'passwordChangedAt')

@@ -32,6 +32,7 @@ export const productInputSchema = z
     karats,
     isActive: z.union([z.boolean(), z.number()]),
     hasDiscount: z.union([z.boolean(), z.number()]),
+    hasPreciousStones: z.union([z.boolean(), z.number()]).default(false),
     pictures: z.array(z.string()).default([]),
     offerPrice: nonNegativeNumber.optional()
   })

@@ -44,6 +44,7 @@ export const createProductData = (data: ProductInput): ProductRow => {
     weight: data.weight,
     karats: data.karats,
     isActive: data.isActive ? 1 : 0,
+    hasPreciousStones: data.hasPreciousStones ? 1 : 0,
     pictures: data.pictures,
     hasDiscount: data.hasDiscount ? 1 : 0,
     offerPrice: data.hasDiscount ? data.offerPrice : undefined

@@ -18,7 +18,7 @@ export const addProduct = async (req: Request, res: Response): Promise<void> => 
   }
   try {
     await turso.execute({
-      sql: 'INSERT INTO products (productId, description, category, price, weight, karats, pictures, isActive, hasDiscount, offerPrice, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      sql: 'INSERT INTO products (productId, description, category, price, weight, karats, pictures, isActive, hasDiscount, hasPreciousStones, offerPrice, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       args: [
         productData.productId,
         productData.description,
@@ -29,6 +29,7 @@ export const addProduct = async (req: Request, res: Response): Promise<void> => 
         JSON.stringify(productData.pictures),
         productData.isActive,
         productData.hasDiscount,
+        productData.hasPreciousStones,
         productData.offerPrice ?? null,
         Date.now()
       ]
@@ -69,7 +70,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
     }
 
     const action = await turso.execute({
-      sql: 'UPDATE products SET productId = ?, description = ?, category = ?, price = ?, weight = ?, karats = ?, pictures = ?, isActive = ?, hasDiscount = ?, offerPrice = ? WHERE id = ?',
+      sql: 'UPDATE products SET productId = ?, description = ?, category = ?, price = ?, weight = ?, karats = ?, pictures = ?, isActive = ?, hasDiscount = ?, hasPreciousStones = ?, offerPrice = ? WHERE id = ?',
       args: [
         productData.productId,
         productData.description,
@@ -80,6 +81,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
         JSON.stringify(productData.pictures),
         productData.isActive,
         productData.hasDiscount,
+        productData.hasPreciousStones,
         productData.offerPrice ?? null,
         id
       ]

@@ -14,7 +14,8 @@ const baseProduct = {
   price: 100,
   karats: [24],
   isActive: true,
-  hasDiscount: false
+  hasDiscount: false,
+  hasPreciousStones: false
 }
 
 let adminCookie: string
@@ -51,6 +52,25 @@ describe('products', () => {
     expect(p.weight).toBe(1.5)
     expect(p.karats).toEqual([24])
     expect(p.pictures).toEqual([])
+    expect(p.hasPreciousStones).toBe(0)
+  })
+
+  it('POST stores hasPreciousStones and catalog returns it', async () => {
+    const res = await agent
+      .post('/api/v1/products')
+      .set('Cookie', adminCookie)
+      .send({ ...baseProduct, productId: 'TEST-102', hasPreciousStones: true })
+    expect(res.status).toBe(201)
+
+    const list = await agent.get('/api/v1/products')
+    const created = list.body.find((p: { productId: string }) => p.productId === 'test-102')
+    expect(created).toBeDefined()
+    expect(created.hasPreciousStones).toBe(1)
+
+    const del = await agent
+      .delete(`/api/v1/products/${created.id}`)
+      .set('Cookie', adminCookie)
+    expect(del.status).toBe(200)
   })
 
   it('POST stores createdAt and sales as numbers so newest-first sort works', async () => {
